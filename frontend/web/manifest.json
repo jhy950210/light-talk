@@ -1,0 +1,11 @@
+{
+  "name": "Light Talk",
+  "short_name": "LightTalk",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#4A90D9",
+  "description": "A lightweight real-time chat application",
+  "orientation": "portrait-primary",
+  "prefer_related_applications": false
+}

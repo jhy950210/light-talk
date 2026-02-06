@@ -1,0 +1,48 @@
+spring:
+  application:
+    name: light-talk
+
+  datasource:
+    url: jdbc:postgresql://localhost:55432/lighttalk
+    username: lighttalk
+    password: lighttalk
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      idle-timeout: 30000
+      connection-timeout: 20000
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+        default_batch_fetch_size: 100
+
+  data:
+    redis:
+      host: localhost
+      port: 66379
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+server:
+  port: 8080
+
+jwt:
+  secret: light-talk-jwt-secret-key-must-be-at-least-256-bits-long-for-hs256
+  access-token-expiry: 3600000
+  refresh-token-expiry: 604800000
+
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    com.lighttalk: DEBUG

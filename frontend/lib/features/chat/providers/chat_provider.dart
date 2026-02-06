@@ -1,0 +1,284 @@
+import 'dart:convert';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:stomp_dart_client/stomp_dart_client.dart';
+import '../../../core/constants/api_constants.dart';
+import '../../../core/network/stomp_service.dart';
+import '../../../core/providers/providers.dart';
+import '../data/chat_repository.dart';
+import '../data/models/chat_room_model.dart';
+import '../data/models/message_model.dart';
+
+// ═══════════════════════════════════════════════════════════════
+// Chat Rooms Provider
+// ═══════════════════════════════════════════════════════════════
+
+class ChatRoomsState {
+  final List<ChatRoomModel> rooms;
+  final bool isLoading;
+  final String? errorMessage;
+
+  const ChatRoomsState({
+    this.rooms = const [],
+    this.isLoading = false,
+    this.errorMessage,
+  });
+
+  ChatRoomsState copyWith({
+    List<ChatRoomModel>? rooms,
+    bool? isLoading,
+    String? errorMessage,
+  }) {
+    return ChatRoomsState(
+      rooms: rooms ?? this.rooms,
+      isLoading: isLoading ?? this.isLoading,
+      errorMessage: errorMessage,
+    );
+  }
+}
+
+class ChatRoomsNotifier extends StateNotifier<ChatRoomsState> {
+  final ChatRepository _repository;
+  final StompService _stompService;
+  final SharedPreferences _prefs;
+
+  ChatRoomsNotifier(this._repository, this._stompService, this._prefs)
+      : super(const ChatRoomsState()) {
+    _subscribeToUserQueue();
+  }
+
+  void _subscribeToUserQueue() {
+    final userId = _prefs.getInt(ApiConstants.userIdKey);
+    if (userId != null && _stompService.isConnected) {
+      _stompService.subscribe(
+        ApiConstants.queueUser(userId),
+        _onUserQueueMessage,
+      );
+    }
+  }
+
+  void _onUserQueueMessage(StompFrame frame) {
+    if (frame.body == null) return;
+    try {
+      final data = jsonDecode(frame.body!) as Map<String, dynamic>;
+      final eventType = data['type'] as String?;
+      if (eventType == 'NEW_MESSAGE') {
+        // Refresh room list to update last message and unread counts
+        loadRooms();
+      }
+    } catch (_) {}
+  }
+
+  Future<void> loadRooms() async {
+    state = state.copyWith(isLoading: true, errorMessage: null);
+    try {
+      final rooms = await _repository.getChatRooms();
+      // Sort by last message time, most recent first
+      rooms.sort((a, b) {
+        final aTime = a.lastMessage?.createdAt ?? a.createdAt;
+        final bTime = b.lastMessage?.createdAt ?? b.createdAt;
+        return bTime.compareTo(aTime);
+      });
+      state = state.copyWith(rooms: rooms, isLoading: false);
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Failed to load chats.',
+      );
+    }
+  }
+
+  Future<ChatRoomModel> createDirectRoom(int friendId) async {
+    final room = await _repository.createDirectChatRoom(friendId);
+    await loadRooms();
+    return room;
+  }
+
+  void updateRoomLastMessage(int roomId, MessageModel message) {
+    final updated = state.rooms.map((r) {
+      if (r.id == roomId) {
+        return r.copyWith(
+          lastMessage: LastMessage(
+            id: message.id,
+            content: message.content,
+            senderNickname: message.senderNickname,
+            senderId: message.senderId,
+            createdAt: message.createdAt,
+          ),
+        );
+      }
+      return r;
+    }).toList();
+    state = state.copyWith(rooms: updated);
+  }
+
+  void clearError() {
+    state = state.copyWith(errorMessage: null);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Messages Provider (per chat room)
+// ═══════════════════════════════════════════════════════════════
+
+class MessagesState {
+  final List<MessageModel> messages;
+  final bool isLoading;
+  final bool isLoadingMore;
+  final bool hasMore;
+  final String? errorMessage;
+
+  const MessagesState({
+    this.messages = const [],
+    this.isLoading = false,
+    this.isLoadingMore = false,
+    this.hasMore = true,
+    this.errorMessage,
+  });
+
+  MessagesState copyWith({
+    List<MessageModel>? messages,
+    bool? isLoading,
+    bool? isLoadingMore,
+    bool? hasMore,
+    String? errorMessage,
+  }) {
+    return MessagesState(
+      messages: messages ?? this.messages,
+      isLoading: isLoading ?? this.isLoading,
+      isLoadingMore: isLoadingMore ?? this.isLoadingMore,
+      hasMore: hasMore ?? this.hasMore,
+      errorMessage: errorMessage,
+    );
+  }
+}
+
+class MessagesNotifier extends StateNotifier<MessagesState> {
+  final ChatRepository _repository;
+  final StompService _stompService;
+  final int roomId;
+  StompUnsubscribe? _unsubscribe;
+
+  MessagesNotifier(this._repository, this._stompService, this.roomId)
+      : super(const MessagesState());
+
+  Future<void> loadMessages() async {
+    state = state.copyWith(isLoading: true, errorMessage: null);
+    try {
+      final page = await _repository.getMessages(roomId);
+      state = state.copyWith(
+        messages: page.messages,
+        isLoading: false,
+        hasMore: page.hasMore,
+      );
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Failed to load messages.',
+      );
+    }
+  }
+
+  Future<void> loadMoreMessages() async {
+    if (state.isLoadingMore || !state.hasMore || state.messages.isEmpty) return;
+    state = state.copyWith(isLoadingMore: true);
+    try {
+      final oldestId = state.messages.last.id;
+      final page = await _repository.getMessages(
+        roomId,
+        beforeId: oldestId,
+      );
+      state = state.copyWith(
+        messages: [...state.messages, ...page.messages],
+        isLoadingMore: false,
+        hasMore: page.hasMore,
+      );
+    } catch (e) {
+      state = state.copyWith(isLoadingMore: false);
+    }
+  }
+
+  void subscribeToRoom() {
+    if (_stompService.isConnected) {
+      _unsubscribe = _stompService.subscribe(
+        ApiConstants.topicChat(roomId),
+        _onMessage,
+      );
+    }
+  }
+
+  void _onMessage(StompFrame frame) {
+    if (frame.body == null) return;
+    try {
+      final data = jsonDecode(frame.body!) as Map<String, dynamic>;
+      final message = MessageModel.fromJson(data);
+      // Add to the beginning (newest first)
+      final existing = state.messages.any((m) => m.id == message.id);
+      if (!existing) {
+        state = state.copyWith(
+          messages: [message, ...state.messages],
+        );
+      }
+    } catch (e) {
+      print('[Chat] Failed to parse STOMP message: $e');
+    }
+  }
+
+  void sendMessage(String content, int senderId, String senderNickname) {
+    final payload = jsonEncode({
+      'chatRoomId': roomId,
+      'senderId': senderId,
+      'senderNickname': senderNickname,
+      'content': content,
+      'type': 'TEXT',
+    });
+    _stompService.send(ApiConstants.appChatSend, payload);
+  }
+
+  void unsubscribeFromRoom() {
+    _unsubscribe?.call();
+    _unsubscribe = null;
+    _stompService.unsubscribe(ApiConstants.topicChat(roomId));
+  }
+
+  Future<void> markAsRead() async {
+    if (state.messages.isNotEmpty) {
+      try {
+        await _repository.markAsRead(roomId, state.messages.first.id);
+      } catch (_) {}
+    }
+  }
+
+  @override
+  void dispose() {
+    unsubscribeFromRoom();
+    super.dispose();
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Providers
+// ═══════════════════════════════════════════════════════════════
+
+final chatRepositoryProvider = Provider<ChatRepository>((ref) {
+  return ChatRepository(ref.watch(dioClientProvider));
+});
+
+final chatRoomsProvider =
+    StateNotifierProvider<ChatRoomsNotifier, ChatRoomsState>((ref) {
+  return ChatRoomsNotifier(
+    ref.watch(chatRepositoryProvider),
+    ref.watch(stompServiceProvider),
+    ref.watch(sharedPreferencesProvider),
+  );
+});
+
+/// Family provider: one MessagesNotifier per room
+final messagesProvider = StateNotifierProvider.family<MessagesNotifier,
+    MessagesState, int>((ref, roomId) {
+  return MessagesNotifier(
+    ref.watch(chatRepositoryProvider),
+    ref.watch(stompServiceProvider),
+    roomId,
+  );
+});

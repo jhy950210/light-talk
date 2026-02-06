@@ -1,0 +1,32 @@
+# Backend
+backend/build/
+backend/**/build/
+backend/.gradle/
+backend/**/.gradle/
+*.class
+*.jar
+*.war
+
+# Frontend
+frontend/.dart_tool/
+frontend/.packages
+frontend/build/
+frontend/.flutter-plugins
+frontend/.flutter-plugins-dependencies
+frontend/ios/Pods/
+frontend/android/.gradle/
+frontend/android/local.properties
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env
+.env
+*.log

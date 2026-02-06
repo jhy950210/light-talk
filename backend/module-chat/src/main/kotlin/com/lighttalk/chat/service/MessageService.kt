@@ -1,0 +1,115 @@
+package com.lighttalk.chat.service
+
+import com.lighttalk.chat.dto.MessagePageResponse
+import com.lighttalk.chat.dto.MessageResponse
+import com.lighttalk.chat.dto.SendMessageRequest
+import com.lighttalk.chat.repository.ChatMemberRepository
+import com.lighttalk.chat.repository.ChatRoomRepository
+import com.lighttalk.chat.repository.MessageRepository
+import com.lighttalk.core.entity.Message
+import com.lighttalk.core.entity.User
+import com.lighttalk.core.exception.ApiException
+import com.lighttalk.core.exception.ErrorCode
+import jakarta.persistence.EntityManager
+import org.slf4j.LoggerFactory
+import org.springframework.data.domain.PageRequest
+import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
+
+@Service
+@Transactional(readOnly = true)
+class MessageService(
+    private val messageRepository: MessageRepository,
+    private val chatRoomRepository: ChatRoomRepository,
+    private val chatMemberRepository: ChatMemberRepository,
+    private val entityManager: EntityManager
+) {
+
+    private val log = LoggerFactory.getLogger(javaClass)
+
+    @Transactional
+    fun sendMessage(chatRoomId: Long, senderId: Long, request: SendMessageRequest): MessageResponse {
+        // Validate chat room exists
+        if (!chatRoomRepository.existsById(chatRoomId)) {
+            throw ApiException(ErrorCode.CHAT_ROOM_NOT_FOUND)
+        }
+
+        // Validate sender is a member
+        chatMemberRepository.findByChatRoomIdAndUserId(chatRoomId, senderId)
+            ?: throw ApiException(ErrorCode.NOT_CHAT_MEMBER)
+
+        val message = Message(
+            chatRoomId = chatRoomId,
+            senderId = senderId,
+            content = request.content,
+            type = request.type
+        )
+
+        val savedMessage = messageRepository.save(message)
+        log.debug("Message saved: id={}, chatRoomId={}, senderId={}", savedMessage.id, chatRoomId, senderId)
+
+        return toMessageResponse(savedMessage)
+    }
+
+    fun getMessages(chatRoomId: Long, userId: Long, cursor: Long?, size: Int): MessagePageResponse {
+        // Validate chat room exists
+        if (!chatRoomRepository.existsById(chatRoomId)) {
+            throw ApiException(ErrorCode.CHAT_ROOM_NOT_FOUND)
+        }
+
+        // Validate user is a member
+        chatMemberRepository.findByChatRoomIdAndUserId(chatRoomId, userId)
+            ?: throw ApiException(ErrorCode.NOT_CHAT_MEMBER)
+
+        val pageable = PageRequest.of(0, size + 1)
+        val messages = if (cursor != null) {
+            messageRepository.findByChatRoomIdWithCursor(chatRoomId, cursor, pageable)
+        } else {
+            messageRepository.findByChatRoomIdLatest(chatRoomId, pageable)
+        }
+
+        val hasMore = messages.size > size
+        val resultMessages = if (hasMore) messages.take(size) else messages
+
+        val messageResponses = resultMessages.map { toMessageResponse(it) }
+
+        return MessagePageResponse(
+            messages = messageResponses,
+            hasMore = hasMore,
+            nextCursor = if (hasMore && resultMessages.isNotEmpty()) resultMessages.last().id else null
+        )
+    }
+
+    @Transactional
+    fun markAsRead(chatRoomId: Long, userId: Long, messageId: Long) {
+        // Validate chat room exists
+        if (!chatRoomRepository.existsById(chatRoomId)) {
+            throw ApiException(ErrorCode.CHAT_ROOM_NOT_FOUND)
+        }
+
+        val membership = chatMemberRepository.findByChatRoomIdAndUserId(chatRoomId, userId)
+            ?: throw ApiException(ErrorCode.NOT_CHAT_MEMBER)
+
+        // Only update if new messageId is greater than current lastReadMessageId
+        val currentLastRead = membership.lastReadMessageId ?: 0L
+        if (messageId > currentLastRead) {
+            membership.lastReadMessageId = messageId
+            chatMemberRepository.save(membership)
+            log.debug("Read receipt updated: chatRoomId={}, userId={}, messageId={}", chatRoomId, userId, messageId)
+        }
+    }
+
+    private fun toMessageResponse(message: Message): MessageResponse {
+        val sender = entityManager.find(User::class.java, message.senderId)
+        return MessageResponse(
+            id = message.id,
+            chatRoomId = message.chatRoomId,
+            senderId = message.senderId,
+            senderNickname = sender?.nickname ?: "Unknown",
+            content = message.content,
+            type = message.type,
+            createdAt = message.createdAt,
+            isRead = false
+        )
+    }
+}
