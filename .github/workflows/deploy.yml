@@ -7,6 +7,8 @@ on:
       - 'backend/**'
       - 'railway.toml'
       - 'Dockerfile'
+      - '.github/workflows/deploy.yml'
+  workflow_dispatch:
 
 jobs:
   build:
