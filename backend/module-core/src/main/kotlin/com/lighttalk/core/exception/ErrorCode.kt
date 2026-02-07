@@ -37,6 +37,19 @@ enum class ErrorCode(
     NOT_CHAT_MEMBER(HttpStatus.FORBIDDEN, "CH002", "채팅방 멤버가 아닙니다"),
     CHAT_ROOM_ALREADY_EXISTS(HttpStatus.CONFLICT, "CH003", "이미 존재하는 채팅방입니다"),
 
+    // User - Phone
+    DUPLICATE_PHONE(HttpStatus.CONFLICT, "U005", "이미 가입된 전화번호입니다"),
+
+    // OTP
+    OTP_RATE_LIMIT_EXCEEDED(HttpStatus.TOO_MANY_REQUESTS, "O001", "인증번호 요청이 너무 많습니다. 잠시 후 다시 시도해주세요"),
+    OTP_EXPIRED(HttpStatus.BAD_REQUEST, "O002", "인증번호가 만료되었습니다"),
+    OTP_INVALID(HttpStatus.BAD_REQUEST, "O003", "인증번호가 올바르지 않습니다"),
+    OTP_MAX_ATTEMPTS(HttpStatus.BAD_REQUEST, "O004", "인증번호 입력 횟수를 초과했습니다"),
+    VERIFICATION_TOKEN_INVALID(HttpStatus.BAD_REQUEST, "O005", "인증 토큰이 유효하지 않습니다"),
+
+    // Nickname Tag
+    NICKNAME_TAG_EXHAUSTED(HttpStatus.CONFLICT, "U006", "해당 닉네임의 태그가 모두 사용되었습니다"),
+
     // Message
     MESSAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "M001", "메시지를 찾을 수 없습니다"),
     EMPTY_MESSAGE_CONTENT(HttpStatus.BAD_REQUEST, "M002", "메시지 내용이 비어있습니다");

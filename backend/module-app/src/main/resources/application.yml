@@ -3,9 +3,9 @@ spring:
     name: light-talk
 
   datasource:
-    url: jdbc:postgresql://localhost:55432/lighttalk
-    username: lighttalk
-    password: lighttalk
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:55432/lighttalk}
+    username: ${DATABASE_USERNAME:lighttalk}
+    password: ${DATABASE_PASSWORD:lighttalk}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 10
@@ -25,8 +25,8 @@ spring:
 
   data:
     redis:
-      host: localhost
-      port: 66379
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:63790}
 
   flyway:
     enabled: true
@@ -34,12 +34,27 @@ spring:
     baseline-on-migrate: true
 
 server:
-  port: 8080
+  port: ${PORT:8080}
 
 jwt:
-  secret: light-talk-jwt-secret-key-must-be-at-least-256-bits-long-for-hs256
+  secret: ${JWT_SECRET:light-talk-jwt-secret-key-must-be-at-least-256-bits-long-for-hs256}
   access-token-expiry: 3600000
   refresh-token-expiry: 604800000
+
+sms:
+  provider: ${SMS_PROVIDER:stub}  # stub, solapi, naver
+  solapi:
+    api-key: ${SOLAPI_API_KEY:}
+    api-secret: ${SOLAPI_API_SECRET:}
+    calling-number: ${SOLAPI_CALLING_NUMBER:}
+  naver:
+    service-id: ${NAVER_SENS_SERVICE_ID:}
+    access-key: ${NAVER_SENS_ACCESS_KEY:}
+    secret-key: ${NAVER_SENS_SECRET_KEY:}
+    calling-number: ${NAVER_SENS_CALLING_NUMBER:}
+
+blind-index:
+  secret-key: ${BLIND_INDEX_SECRET:light-talk-blind-index-secret-key-change-in-production}
 
 logging:
   level:

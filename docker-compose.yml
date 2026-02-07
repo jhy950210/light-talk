@@ -22,7 +22,7 @@ services:
     image: redis:7
     container_name: lighttalk-redis
     ports:
-      - "66379:6379"
+      - "63790:6379"
     volumes:
       - redis-data:/data
     healthcheck:
