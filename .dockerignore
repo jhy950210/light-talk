@@ -1,0 +1,15 @@
+frontend/
+.git/
+.github/
+.idea/
+.claude/
+.vscode/
+*.md
+*.iml
+.env
+.env.*
+.DS_Store
+.gitignore
+.dockerignore
+docker-compose.yml
+railway.toml
