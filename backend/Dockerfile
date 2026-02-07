@@ -1,7 +1,7 @@
 # Stage 1: Build
 FROM gradle:8.10.2-jdk17 AS build
 WORKDIR /app
-COPY . .
+COPY backend/ .
 RUN gradle :module-app:bootJar -x test --no-daemon
 
 # Stage 2: Runtime
