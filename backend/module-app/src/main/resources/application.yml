@@ -27,6 +27,7 @@ spring:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:63790}
+      password: ${REDIS_PASSWORD:}
 
   flyway:
     enabled: true
