@@ -14,8 +14,10 @@ frontend/build/
 frontend/.flutter-plugins
 frontend/.flutter-plugins-dependencies
 frontend/ios/Pods/
+frontend/ios/Flutter/ephemeral/
 frontend/android/.gradle/
 frontend/android/local.properties
+frontend/android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
 
 # IDE
 .idea/
@@ -29,4 +31,8 @@ Thumbs.db
 
 # Env
 .env
+.env.*
 *.log
+
+# Claude Code
+.claude/projects/
