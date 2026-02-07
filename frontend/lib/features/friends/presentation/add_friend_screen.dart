@@ -62,7 +62,7 @@ class _AddFriendScreenState extends ConsumerState<AddFriendScreen> {
           icon: const Icon(Icons.arrow_back_ios_rounded),
           onPressed: () => context.pop(),
         ),
-        title: const Text('Add Friend'),
+        title: const Text('친구 추가'),
       ),
       body: Column(
         children: [
@@ -139,7 +139,7 @@ class _AddFriendScreenState extends ConsumerState<AddFriendScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            'No users found',
+            '사용자를 찾을 수 없습니다',
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   color: const Color(0xFF8E8E93),
                 ),

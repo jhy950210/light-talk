@@ -42,7 +42,7 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Chats'),
+        title: const Text('채팅'),
       ),
       body: state.isLoading && state.rooms.isEmpty
           ? const Center(child: CircularProgressIndicator())
@@ -70,7 +70,7 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              'No conversations yet',
+              '아직 대화가 없어요',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     color: const Color(0xFF8E8E93),
                     fontWeight: FontWeight.w600,
@@ -78,7 +78,7 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Start a chat from your friends list',
+              '친구 목록에서 대화를 시작해보세요',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: const Color(0xFFC7C7CC),
                   ),
@@ -174,7 +174,7 @@ class _ChatRoomTile extends StatelessWidget {
                         child: Text(
                           lastMsg != null
                               ? '${lastMsg.senderNickname}: ${_lastMessagePreview(lastMsg)}'
-                              : 'No messages yet',
+                              : '메시지 없음',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
@@ -240,7 +240,7 @@ class _ChatRoomTile extends StatelessWidget {
     if (diff.inDays == 0) {
       return DateFormat.Hm().format(dateTime);
     } else if (diff.inDays == 1) {
-      return 'Yesterday';
+      return '어제';
     } else if (diff.inDays < 7) {
       return DateFormat.E().format(dateTime);
     } else {

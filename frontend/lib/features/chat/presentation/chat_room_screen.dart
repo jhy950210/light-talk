@@ -295,7 +295,7 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
         .where((r) => r.id == widget.roomId)
         .toList();
     final roomName =
-        room.isNotEmpty ? room.first.name : 'Chat';
+        room.isNotEmpty ? room.first.name : '채팅';
 
     return Scaffold(
       appBar: AppBar(
@@ -320,8 +320,8 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
             if (room.isNotEmpty && room.first.members.isNotEmpty)
               Text(
                 room.first.members.any((m) => m.isOnline)
-                    ? 'Online'
-                    : 'Offline',
+                    ? '온라인'
+                    : '오프라인',
                 style: TextStyle(
                   fontSize: 12,
                   color: room.first.members.any((m) => m.isOnline)
@@ -386,7 +386,7 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
             ),
             const SizedBox(height: 12),
             Text(
-              'Say hello!',
+              '첫 메시지를 보내보세요!',
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     color: const Color(0xFF8E8E93),
                   ),
@@ -466,13 +466,13 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
     if (date.year == now.year &&
         date.month == now.month &&
         date.day == now.day) {
-      label = 'Today';
+      label = '오늘';
     } else if (date.year == now.year &&
         date.month == now.month &&
         date.day == now.day - 1) {
-      label = 'Yesterday';
+      label = '어제';
     } else {
-      label = DateFormat('MMMM d, yyyy').format(date);
+      label = DateFormat('yyyy년 M월 d일').format(date);
     }
 
     return Padding(
@@ -554,7 +554,7 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
                 textCapitalization: TextCapitalization.sentences,
                 textInputAction: TextInputAction.newline,
                 decoration: const InputDecoration(
-                  hintText: 'Message',
+                  hintText: '메시지를 입력하세요',
                   border: InputBorder.none,
                   enabledBorder: InputBorder.none,
                   focusedBorder: InputBorder.none,

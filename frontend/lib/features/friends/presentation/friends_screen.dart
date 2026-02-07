@@ -40,7 +40,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Friends'),
+        title: const Text('친구'),
         actions: [
           IconButton(
             icon: const Icon(Icons.person_add_outlined),
@@ -78,7 +78,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              'No friends yet',
+              '아직 친구가 없어요',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     color: const Color(0xFF8E8E93),
                     fontWeight: FontWeight.w600,
@@ -86,7 +86,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Add friends to start chatting!',
+              '친구를 추가하고 대화를 시작하세요!',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: const Color(0xFFC7C7CC),
                   ),
@@ -95,7 +95,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
             ElevatedButton.icon(
               onPressed: () => context.push('/friends/add'),
               icon: const Icon(Icons.person_add_outlined),
-              label: const Text('Add Friend'),
+              label: const Text('친구 추가'),
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size(200, 48),
               ),
@@ -117,12 +117,12 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
       children: [
         if (onlineFriends.isNotEmpty) ...[
           _buildSectionHeader(
-              context, 'Online', onlineFriends.length.toString()),
+              context, '온라인', onlineFriends.length.toString()),
           ...onlineFriends.map((f) => _buildFriendTile(context, f)),
         ],
         if (offlineFriends.isNotEmpty) ...[
           _buildSectionHeader(
-              context, 'Offline', offlineFriends.length.toString()),
+              context, '오프라인', offlineFriends.length.toString()),
           ...offlineFriends.map((f) => _buildFriendTile(context, f)),
         ],
       ],
@@ -170,19 +170,19 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
         return await showDialog<bool>(
           context: context,
           builder: (ctx) => AlertDialog(
-            title: const Text('Remove Friend'),
+            title: const Text('친구 삭제'),
             content: Text(
-                'Are you sure you want to remove ${friend.nickname}?'),
+                '${friend.nickname} 님을 친구에서 삭제하시겠습니까?'),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(false),
-                child: const Text('Cancel'),
+                child: const Text('취소'),
               ),
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(true),
                 style: TextButton.styleFrom(
                     foregroundColor: AppTheme.errorRed),
-                child: const Text('Remove'),
+                child: const Text('삭제'),
               ),
             ],
           ),
@@ -215,7 +215,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
           ),
         ),
         subtitle: Text(
-          friend.isOnline ? 'Online' : 'Offline',
+          friend.isOnline ? '온라인' : '오프라인',
           style: TextStyle(
             fontSize: 13,
             color: friend.isOnline

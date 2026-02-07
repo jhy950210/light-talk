@@ -41,40 +41,40 @@ class MainShell extends ConsumerWidget {
                 _NavItem(
                   icon: Icons.people_outlined,
                   activeIcon: Icons.people_rounded,
-                  label: 'Friends',
+                  label: '친구',
                   isActive: currentIndex == 0,
                   onTap: () => context.go('/friends'),
                 ),
                 _NavItem(
                   icon: Icons.chat_bubble_outline_rounded,
                   activeIcon: Icons.chat_bubble_rounded,
-                  label: 'Chats',
+                  label: '채팅',
                   isActive: currentIndex == 1,
                   onTap: () => context.go('/chats'),
                 ),
                 _NavItem(
                   icon: Icons.logout_rounded,
                   activeIcon: Icons.logout_rounded,
-                  label: 'Logout',
+                  label: '로그아웃',
                   isActive: false,
                   onTap: () async {
                     final confirmed = await showDialog<bool>(
                       context: context,
                       builder: (ctx) => AlertDialog(
-                        title: const Text('Sign Out'),
+                        title: const Text('로그아웃'),
                         content: const Text(
-                            'Are you sure you want to sign out?'),
+                            '로그아웃 하시겠습니까?'),
                         actions: [
                           TextButton(
                             onPressed: () => Navigator.of(ctx).pop(false),
-                            child: const Text('Cancel'),
+                            child: const Text('취소'),
                           ),
                           TextButton(
                             onPressed: () => Navigator.of(ctx).pop(true),
                             style: TextButton.styleFrom(
                               foregroundColor: AppTheme.errorRed,
                             ),
-                            child: const Text('Sign Out'),
+                            child: const Text('로그아웃'),
                           ),
                         ],
                       ),

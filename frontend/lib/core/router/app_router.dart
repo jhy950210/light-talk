@@ -146,7 +146,7 @@ class _CreateChatRedirectState extends ConsumerState<_CreateChatRedirect> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to create chat room.')),
+          const SnackBar(content: Text('채팅방 생성에 실패했습니다.')),
         );
         context.go('/friends');
       }
