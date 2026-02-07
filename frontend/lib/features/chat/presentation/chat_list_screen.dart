@@ -173,7 +173,7 @@ class _ChatRoomTile extends StatelessWidget {
                       Expanded(
                         child: Text(
                           lastMsg != null
-                              ? '${lastMsg.senderNickname}: ${lastMsg.content}'
+                              ? '${lastMsg.senderNickname}: ${_lastMessagePreview(lastMsg)}'
                               : 'No messages yet',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -220,6 +220,17 @@ class _ChatRoomTile extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _lastMessagePreview(LastMessage lastMsg) {
+    switch (lastMsg.type) {
+      case 'IMAGE':
+        return '사진';
+      case 'VIDEO':
+        return '동영상';
+      default:
+        return lastMsg.content;
+    }
   }
 
   String _formatTime(DateTime dateTime) {

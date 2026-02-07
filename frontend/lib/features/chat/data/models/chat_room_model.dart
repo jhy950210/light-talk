@@ -67,6 +67,7 @@ class LastMessage {
   final String content;
   final String senderNickname;
   final int senderId;
+  final String type;
   final DateTime createdAt;
 
   const LastMessage({
@@ -74,6 +75,7 @@ class LastMessage {
     required this.content,
     required this.senderNickname,
     required this.senderId,
+    this.type = 'TEXT',
     required this.createdAt,
   });
 
@@ -83,6 +85,7 @@ class LastMessage {
       content: json['content'] as String? ?? '',
       senderNickname: json['senderNickname'] as String? ?? '',
       senderId: json['senderId'] as int? ?? 0,
+      type: json['type'] as String? ?? 'TEXT',
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'] as String)
           : DateTime.now(),

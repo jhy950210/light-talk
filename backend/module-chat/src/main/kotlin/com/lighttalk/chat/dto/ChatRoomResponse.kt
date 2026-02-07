@@ -22,5 +22,6 @@ data class LastMessageInfo(
     val id: Long,
     val content: String,
     val senderId: Long,
+    val type: String,
     val createdAt: LocalDateTime
 )

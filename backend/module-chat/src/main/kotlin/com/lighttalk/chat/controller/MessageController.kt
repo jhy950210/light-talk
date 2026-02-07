@@ -7,6 +7,7 @@ import com.lighttalk.chat.service.MessageService
 import com.lighttalk.core.dto.ApiResponse
 import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PutMapping
@@ -33,6 +34,18 @@ class MessageController(
         val userId = principal.name.toLong()
         val response = messageService.getMessages(roomId, userId, cursor, size)
         return ResponseEntity.ok(ApiResponse.success(response))
+    }
+
+    @DeleteMapping("/{roomId}/messages/{messageId}")
+    fun deleteMessage(
+        principal: Principal,
+        @PathVariable roomId: Long,
+        @PathVariable messageId: Long
+    ): ResponseEntity<ApiResponse<Nothing>> {
+        val userId = principal.name.toLong()
+        messageService.deleteMessage(roomId, messageId, userId)
+        chatNotificationService.notifyMessageDeleted(roomId, messageId)
+        return ResponseEntity.ok(ApiResponse.success())
     }
 
     @PutMapping("/{roomId}/read")

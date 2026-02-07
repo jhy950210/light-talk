@@ -7,6 +7,7 @@ class MessageModel {
   final String content;
   final String type;
   final DateTime createdAt;
+  final DateTime? deletedAt;
 
   const MessageModel({
     required this.id,
@@ -17,7 +18,34 @@ class MessageModel {
     required this.content,
     this.type = 'TEXT',
     required this.createdAt,
+    this.deletedAt,
   });
+
+  bool get isDeleted => deletedAt != null;
+  bool get isImage => type == 'IMAGE';
+  bool get isVideo => type == 'VIDEO';
+  bool get isMedia => isImage || isVideo;
+  String get mediaUrl => content;
+
+  bool canBeDeletedBy(int userId) {
+    if (senderId != userId) return false;
+    final fiveMinutesAgo = DateTime.now().subtract(const Duration(minutes: 5));
+    return createdAt.isAfter(fiveMinutesAgo);
+  }
+
+  MessageModel copyWithDeleted() {
+    return MessageModel(
+      id: id,
+      chatRoomId: chatRoomId,
+      senderId: senderId,
+      senderNickname: senderNickname,
+      senderProfileImageUrl: senderProfileImageUrl,
+      content: '',
+      type: type,
+      createdAt: createdAt,
+      deletedAt: DateTime.now(),
+    );
+  }
 
   factory MessageModel.fromJson(Map<String, dynamic> json) {
     return MessageModel(
@@ -31,6 +59,9 @@ class MessageModel {
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'] as String)
           : DateTime.now(),
+      deletedAt: json['deletedAt'] != null
+          ? DateTime.parse(json['deletedAt'] as String)
+          : null,
     );
   }
 
@@ -43,6 +74,7 @@ class MessageModel {
         'content': content,
         'type': type,
         'createdAt': createdAt.toIso8601String(),
+        'deletedAt': deletedAt?.toIso8601String(),
       };
 
   bool isSentBy(int userId) => senderId == userId;

@@ -11,5 +11,6 @@ data class MessageResponse(
     val content: String,
     val type: MessageType,
     val createdAt: LocalDateTime,
-    val isRead: Boolean
+    val isRead: Boolean,
+    val deletedAt: LocalDateTime? = null
 )

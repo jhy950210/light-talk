@@ -38,6 +38,14 @@ class ApiConstants {
   static String messages(int roomId) => '/api/v1/chats/$roomId/messages';
   static String readReceipt(int roomId) =>
       '/api/v1/chats/$roomId/read';
+  static String deleteMessage(int roomId, int messageId) =>
+      '/api/v1/chats/$roomId/messages/$messageId';
+
+  // ── Upload ────────────────────────────────────────────────────
+  static const String presignUpload = '/api/v1/upload/presign';
+
+  // ── Users (account) ─────────────────────────────────────────
+  static const String withdrawUser = '/api/v1/users/me';
 
   // ── STOMP Destinations ─────────────────────────────────────
   static String topicChat(int roomId) => '/topic/chat/$roomId';

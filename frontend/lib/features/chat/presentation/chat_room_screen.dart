@@ -1,13 +1,19 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:mime/mime.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/avatar_widget.dart';
 import '../../../core/providers/providers.dart';
 import '../data/models/message_model.dart';
 import '../providers/chat_provider.dart';
+import 'widgets/image_bubble.dart';
+import 'widgets/video_bubble.dart';
 
 class ChatRoomScreen extends ConsumerStatefulWidget {
   final int roomId;
@@ -22,6 +28,7 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
   final _messageController = TextEditingController();
   final _scrollController = ScrollController();
   final _focusNode = FocusNode();
+  final _imagePicker = ImagePicker();
   bool _showScrollToBottom = false;
 
   int get _currentUserId =>
@@ -88,6 +95,196 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
     _focusNode.requestFocus();
   }
 
+  void _showMediaPicker() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 36,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 12),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library_outlined),
+                title: const Text('갤러리에서 사진 선택'),
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  _pickImage(ImageSource.gallery);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.camera_alt_outlined),
+                title: const Text('카메라로 사진 촬영'),
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  _pickImage(ImageSource.camera);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.video_library_outlined),
+                title: const Text('갤러리에서 동영상 선택'),
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  _pickVideo(ImageSource.gallery);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.videocam_outlined),
+                title: const Text('카메라로 동영상 촬영'),
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  _pickVideo(ImageSource.camera);
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    final picked = await _imagePicker.pickImage(
+      source: source,
+      maxWidth: 1920,
+      maxHeight: 1920,
+    );
+    if (picked == null) return;
+
+    // Compress image
+    final compressed = await FlutterImageCompress.compressAndGetFile(
+      picked.path,
+      '${picked.path}_compressed.jpg',
+      quality: 80,
+      minWidth: 1920,
+      minHeight: 1920,
+    );
+
+    final file = File(compressed?.path ?? picked.path);
+    final contentType = lookupMimeType(file.path) ?? 'image/jpeg';
+
+    ref.read(messagesProvider(widget.roomId).notifier).sendMediaMessage(
+      file: file,
+      contentType: contentType,
+      messageType: 'IMAGE',
+      senderId: _currentUserId,
+      senderNickname: _currentNickname,
+    );
+    _scrollToBottom();
+  }
+
+  Future<void> _pickVideo(ImageSource source) async {
+    final picked = await _imagePicker.pickVideo(
+      source: source,
+      maxDuration: const Duration(minutes: 3),
+    );
+    if (picked == null) return;
+
+    final file = File(picked.path);
+    final fileSize = await file.length();
+
+    // Check file size (50MB limit)
+    if (fileSize > 50 * 1024 * 1024) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('동영상은 50MB 이하만 전송할 수 있습니다'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+      return;
+    }
+
+    final contentType = lookupMimeType(file.path) ?? 'video/mp4';
+
+    ref.read(messagesProvider(widget.roomId).notifier).sendMediaMessage(
+      file: file,
+      contentType: contentType,
+      messageType: 'VIDEO',
+      senderId: _currentUserId,
+      senderNickname: _currentNickname,
+    );
+    _scrollToBottom();
+  }
+
+  void _showDeleteMenu(MessageModel message) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 36,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 12),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.delete_outline, color: Colors.red),
+                title: const Text(
+                  '메시지 삭제',
+                  style: TextStyle(color: Colors.red),
+                ),
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  _confirmDelete(message);
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _confirmDelete(MessageModel message) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('메시지 삭제'),
+        content: const Text('이 메시지를 모든 사용자에게서 삭제하시겠습니까?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('취소'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              ref
+                  .read(messagesProvider(widget.roomId).notifier)
+                  .deleteMessage(message.id);
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('삭제'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final msgState = ref.watch(messagesProvider(widget.roomId));
@@ -137,6 +334,14 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
       ),
       body: Column(
         children: [
+          // ── Upload progress ─────────────────────────
+          if (msgState.isUploading)
+            LinearProgressIndicator(
+              value: msgState.uploadProgress > 0 ? msgState.uploadProgress : null,
+              backgroundColor: Colors.grey.shade200,
+              valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
+            ),
+
           // ── Messages ──────────────────────────────
           Expanded(
             child: msgState.isLoading && msgState.messages.isEmpty
@@ -162,7 +367,7 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
           ),
 
           // ── Input Bar ─────────────────────────────
-          _buildInputBar(context),
+          _buildInputBar(context, msgState),
         ],
       ),
     );
@@ -223,11 +428,17 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
           children: [
             if (showDateSep)
               _buildDateSeparator(context, message.createdAt),
-            _MessageBubble(
-              message: message,
-              isMine: isMine,
-              showAvatar: showAvatar,
-              showSenderName: showAvatar,
+            GestureDetector(
+              onLongPress: !message.isDeleted &&
+                      message.canBeDeletedBy(_currentUserId)
+                  ? () => _showDeleteMenu(message)
+                  : null,
+              child: _MessageBubble(
+                message: message,
+                isMine: isMine,
+                showAvatar: showAvatar,
+                showSenderName: showAvatar,
+              ),
             ),
           ],
         );
@@ -286,10 +497,10 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
     );
   }
 
-  Widget _buildInputBar(BuildContext context) {
+  Widget _buildInputBar(BuildContext context, MessagesState msgState) {
     return Container(
       padding: EdgeInsets.only(
-        left: 12,
+        left: 8,
         right: 8,
         top: 8,
         bottom: MediaQuery.of(context).padding.bottom + 8,
@@ -307,6 +518,28 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
+          // (+) Media button
+          Material(
+            color: Colors.transparent,
+            shape: const CircleBorder(),
+            child: InkWell(
+              onTap: msgState.isUploading ? null : _showMediaPicker,
+              customBorder: const CircleBorder(),
+              child: Container(
+                width: 40,
+                height: 40,
+                alignment: Alignment.center,
+                child: Icon(
+                  Icons.add_circle_outline,
+                  color: msgState.isUploading
+                      ? const Color(0xFFE5E5EA)
+                      : AppTheme.primaryColor,
+                  size: 26,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 4),
           Expanded(
             child: Container(
               constraints: const BoxConstraints(maxHeight: 120),
@@ -393,6 +626,12 @@ class _MessageBubble extends StatelessWidget {
       return _buildSystemMessage(context);
     }
 
+    if (message.isDeleted) {
+      return _buildDeletedMessage(context, timeStr);
+    }
+
+    final maxBubbleWidth = MediaQuery.of(context).size.width * 0.7;
+
     return Padding(
       padding: EdgeInsets.only(
         top: showAvatar ? 8 : 2,
@@ -444,36 +683,134 @@ class _MessageBubble extends StatelessWidget {
                       ),
                     ),
                   ),
-                Container(
-                  constraints: BoxConstraints(
-                    maxWidth: MediaQuery.of(context).size.width * 0.7,
-                  ),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: isMine
-                        ? AppTheme.sentBubble
-                        : AppTheme.receivedBubble,
-                    borderRadius: BorderRadius.only(
-                      topLeft: const Radius.circular(18),
-                      topRight: const Radius.circular(18),
-                      bottomLeft: Radius.circular(isMine ? 18 : 4),
-                      bottomRight: Radius.circular(isMine ? 4 : 18),
+                if (message.isImage)
+                  ImageBubble(
+                    imageUrl: message.mediaUrl,
+                    isMine: isMine,
+                    maxWidth: maxBubbleWidth,
+                  )
+                else if (message.isVideo)
+                  VideoBubble(
+                    videoUrl: message.mediaUrl,
+                    isMine: isMine,
+                    maxWidth: maxBubbleWidth,
+                  )
+                else
+                  Container(
+                    constraints: BoxConstraints(maxWidth: maxBubbleWidth),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: isMine
+                          ? AppTheme.sentBubble
+                          : AppTheme.receivedBubble,
+                      borderRadius: BorderRadius.only(
+                        topLeft: const Radius.circular(18),
+                        topRight: const Radius.circular(18),
+                        bottomLeft: Radius.circular(isMine ? 18 : 4),
+                        bottomRight: Radius.circular(isMine ? 4 : 18),
+                      ),
+                    ),
+                    child: Text(
+                      message.content,
+                      style: TextStyle(
+                        fontSize: 15,
+                        color:
+                            isMine ? Colors.white : const Color(0xFF1C1C1E),
+                        height: 1.35,
+                      ),
                     ),
                   ),
-                  child: Text(
-                    message.content,
-                    style: TextStyle(
-                      fontSize: 15,
-                      color: isMine ? Colors.white : const Color(0xFF1C1C1E),
-                      height: 1.35,
-                    ),
-                  ),
-                ),
               ],
             ),
           ),
           // Time (for received messages, show on right of bubble)
+          if (!isMine)
+            Padding(
+              padding: const EdgeInsets.only(left: 6, bottom: 2),
+              child: Text(
+                timeStr,
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: Color(0xFFC7C7CC),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDeletedMessage(BuildContext context, String timeStr) {
+    return Padding(
+      padding: EdgeInsets.only(
+        top: showAvatar ? 8 : 2,
+        bottom: 2,
+      ),
+      child: Row(
+        mainAxisAlignment:
+            isMine ? MainAxisAlignment.end : MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          if (!isMine) ...[
+            if (showAvatar)
+              AvatarWidget(
+                name: message.senderNickname,
+                imageUrl: message.senderProfileImageUrl,
+                radius: 16,
+              )
+            else
+              const SizedBox(width: 32),
+            const SizedBox(width: 8),
+          ],
+          if (isMine)
+            Padding(
+              padding: const EdgeInsets.only(right: 6, bottom: 2),
+              child: Text(
+                timeStr,
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: Color(0xFFC7C7CC),
+                ),
+              ),
+            ),
+          Flexible(
+            child: Container(
+              constraints: BoxConstraints(
+                maxWidth: MediaQuery.of(context).size.width * 0.7,
+              ),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF2F2F7),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                  color: const Color(0xFFE5E5EA),
+                  width: 0.5,
+                ),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.block,
+                    size: 14,
+                    color: Color(0xFF8E8E93),
+                  ),
+                  SizedBox(width: 6),
+                  Text(
+                    '삭제된 메시지입니다',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Color(0xFF8E8E93),
+                      fontStyle: FontStyle.italic,
+                      height: 1.35,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
           if (!isMine)
             Padding(
               padding: const EdgeInsets.only(left: 6, bottom: 2),

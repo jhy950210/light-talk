@@ -57,6 +57,14 @@ sms:
 blind-index:
   secret-key: ${BLIND_INDEX_SECRET:light-talk-blind-index-secret-key-change-in-production}
 
+storage:
+  r2:
+    endpoint: ${R2_ENDPOINT:https://account-id.r2.cloudflarestorage.com}
+    bucket: ${R2_BUCKET:lighttalk-media}
+    access-key: ${R2_ACCESS_KEY:}
+    secret-key: ${R2_SECRET_KEY:}
+    public-url: ${R2_PUBLIC_URL:https://media.lighttalk.app}
+
 logging:
   level:
     org.hibernate.SQL: DEBUG

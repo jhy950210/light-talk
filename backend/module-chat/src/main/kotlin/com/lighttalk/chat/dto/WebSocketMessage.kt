@@ -23,3 +23,9 @@ data class UserStatusEvent(
     val userId: Long,
     val online: Boolean
 )
+
+data class MessageDeletedEvent(
+    val type: String = "MESSAGE_DELETED",
+    val chatRoomId: Long,
+    val messageId: Long
+)

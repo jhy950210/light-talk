@@ -52,5 +52,12 @@ enum class ErrorCode(
 
     // Message
     MESSAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "M001", "메시지를 찾을 수 없습니다"),
-    EMPTY_MESSAGE_CONTENT(HttpStatus.BAD_REQUEST, "M002", "메시지 내용이 비어있습니다");
+    EMPTY_MESSAGE_CONTENT(HttpStatus.BAD_REQUEST, "M002", "메시지 내용이 비어있습니다"),
+    MESSAGE_DELETE_FORBIDDEN(HttpStatus.FORBIDDEN, "M003", "본인의 메시지만 삭제할 수 있습니다"),
+    MESSAGE_DELETE_EXPIRED(HttpStatus.BAD_REQUEST, "M004", "메시지 삭제 가능 시간(5분)이 지났습니다"),
+    MESSAGE_ALREADY_DELETED(HttpStatus.BAD_REQUEST, "M005", "이미 삭제된 메시지입니다"),
+
+    // Upload
+    INVALID_FILE_TYPE(HttpStatus.BAD_REQUEST, "UP001", "허용되지 않은 파일 형식입니다"),
+    FILE_TOO_LARGE(HttpStatus.BAD_REQUEST, "UP002", "파일 크기가 제한을 초과했습니다");
 }

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -64,7 +65,7 @@ class ChatRoomsNotifier extends StateNotifier<ChatRoomsState> {
     try {
       final data = jsonDecode(frame.body!) as Map<String, dynamic>;
       final eventType = data['type'] as String?;
-      if (eventType == 'NEW_MESSAGE') {
+      if (eventType == 'NEW_MESSAGE' || eventType == 'MESSAGE_DELETED') {
         // Refresh room list to update last message and unread counts
         loadRooms();
       }
@@ -119,6 +120,7 @@ class ChatRoomsNotifier extends StateNotifier<ChatRoomsState> {
             content: message.content,
             senderNickname: message.senderNickname,
             senderId: message.senderId,
+            type: message.type,
             createdAt: message.createdAt,
           ),
         );
@@ -143,6 +145,8 @@ class MessagesState {
   final bool isLoadingMore;
   final bool hasMore;
   final String? errorMessage;
+  final bool isUploading;
+  final double uploadProgress;
 
   const MessagesState({
     this.messages = const [],
@@ -150,6 +154,8 @@ class MessagesState {
     this.isLoadingMore = false,
     this.hasMore = true,
     this.errorMessage,
+    this.isUploading = false,
+    this.uploadProgress = 0.0,
   });
 
   MessagesState copyWith({
@@ -158,6 +164,8 @@ class MessagesState {
     bool? isLoadingMore,
     bool? hasMore,
     String? errorMessage,
+    bool? isUploading,
+    double? uploadProgress,
   }) {
     return MessagesState(
       messages: messages ?? this.messages,
@@ -165,6 +173,8 @@ class MessagesState {
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
       hasMore: hasMore ?? this.hasMore,
       errorMessage: errorMessage,
+      isUploading: isUploading ?? this.isUploading,
+      uploadProgress: uploadProgress ?? this.uploadProgress,
     );
   }
 }
@@ -241,6 +251,14 @@ class MessagesNotifier extends StateNotifier<MessagesState> {
     if (frame.body == null) return;
     try {
       final data = jsonDecode(frame.body!) as Map<String, dynamic>;
+      final eventType = data['type'] as String?;
+
+      if (eventType == 'MESSAGE_DELETED') {
+        final messageId = data['messageId'] as int;
+        _markMessageAsDeleted(messageId);
+        return;
+      }
+
       final message = MessageModel.fromJson(data);
       // Add to the beginning (newest first)
       final existing = state.messages.any((m) => m.id == message.id);
@@ -254,15 +272,79 @@ class MessagesNotifier extends StateNotifier<MessagesState> {
     }
   }
 
-  void sendMessage(String content, int senderId, String senderNickname) {
+  void _markMessageAsDeleted(int messageId) {
+    final updated = state.messages.map((m) {
+      if (m.id == messageId) {
+        return m.copyWithDeleted();
+      }
+      return m;
+    }).toList();
+    state = state.copyWith(messages: updated);
+  }
+
+  Future<void> deleteMessage(int messageId) async {
+    try {
+      await _repository.deleteMessage(roomId, messageId);
+      _markMessageAsDeleted(messageId);
+    } catch (e) {
+      state = state.copyWith(errorMessage: _parseError(e));
+    }
+  }
+
+  void sendMessage(String content, int senderId, String senderNickname, {String type = 'TEXT'}) {
     final payload = jsonEncode({
       'chatRoomId': roomId,
       'senderId': senderId,
       'senderNickname': senderNickname,
       'content': content,
-      'type': 'TEXT',
+      'type': type,
     });
     _stompService.send(ApiConstants.appChatSend, payload);
+  }
+
+  Future<void> sendMediaMessage({
+    required File file,
+    required String contentType,
+    required String messageType,
+    required int senderId,
+    required String senderNickname,
+  }) async {
+    state = state.copyWith(isUploading: true, uploadProgress: 0.0, errorMessage: null);
+    try {
+      final fileName = file.path.split('/').last;
+      final fileLength = await file.length();
+      final purpose = messageType == 'VIDEO' ? 'CHAT_VIDEO' : 'CHAT_IMAGE';
+
+      // 1. Get presigned URL
+      final presign = await _repository.getPresignedUrl(
+        fileName: fileName,
+        contentType: contentType,
+        contentLength: fileLength,
+        purpose: purpose,
+        chatRoomId: roomId,
+      );
+
+      // 2. Upload to R2
+      await _repository.uploadToR2(
+        uploadUrl: presign.uploadUrl,
+        file: file,
+        contentType: contentType,
+        onProgress: (progress) {
+          state = state.copyWith(uploadProgress: progress);
+        },
+      );
+
+      // 3. Send message via STOMP
+      sendMessage(presign.publicUrl, senderId, senderNickname, type: messageType);
+
+      state = state.copyWith(isUploading: false, uploadProgress: 0.0);
+    } catch (e) {
+      state = state.copyWith(
+        isUploading: false,
+        uploadProgress: 0.0,
+        errorMessage: _parseError(e),
+      );
+    }
   }
 
   void unsubscribeFromRoom() {

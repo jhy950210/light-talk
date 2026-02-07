@@ -56,7 +56,7 @@ light-talk/
 - **friendships**: id, user_id, friend_id, status(PENDING/ACCEPTED/BLOCKED), created_at
 - **chat_rooms**: id, type(DIRECT), created_at
 - **chat_members**: id, chat_room_id, user_id, joined_at, last_read_message_id
-- **messages**: id, chat_room_id, sender_id, content, type(TEXT/IMAGE/SYSTEM), created_at
+- **messages**: id, chat_room_id, sender_id, content, type(TEXT/IMAGE/VIDEO/SYSTEM), created_at, deleted_at
 
 ## 아키텍처 원칙
 - 모듈 간 직접 의존 금지 → 이벤트 또는 Application Service에서 조합
@@ -68,10 +68,11 @@ light-talk/
 ## API 엔드포인트 (정본)
 - **Auth**: POST `/api/v1/auth/register`, `/api/v1/auth/login`, `/api/v1/auth/refresh`
 - **Auth (Phone)**: POST `/api/v1/auth/send-otp`, `/api/v1/auth/verify-otp`, `/api/v1/auth/phone/register`, `/api/v1/auth/phone/login`
-- **Users**: GET `/api/v1/users/me`, PUT `/api/v1/users/me`, GET `/api/v1/users/search?q=` (닉네임 또는 닉네임#태그)
+- **Users**: GET `/api/v1/users/me`, PUT `/api/v1/users/me`, DELETE `/api/v1/users/me` (회원탈퇴, body: `{password}`), GET `/api/v1/users/search?q=` (닉네임 또는 닉네임#태그)
 - **Friends**: GET `/api/v1/friends`, POST `/api/v1/friends` (body: `{friendId}`), PUT `/api/v1/friends/{id}/accept`, DELETE `/api/v1/friends/{id}`, GET `/api/v1/friends/pending`
 - **Chats**: GET `/api/v1/chats`, POST `/api/v1/chats`, GET `/api/v1/chats/{roomId}`
-- **Messages**: GET `/api/v1/chats/{roomId}/messages?cursor=&size=20`, PUT `/api/v1/chats/{roomId}/read`
+- **Messages**: GET `/api/v1/chats/{roomId}/messages?cursor=&size=20`, DELETE `/api/v1/chats/{roomId}/messages/{messageId}` (5분 이내 본인 메시지 삭제), PUT `/api/v1/chats/{roomId}/read`
+- **Upload**: POST `/api/v1/upload/presign` (body: `{fileName, contentType, contentLength, purpose, chatRoomId?}`) → `{uploadUrl, publicUrl}`
 - **WebSocket**: STOMP endpoint `/ws`, 구독 `/topic/chat/{roomId}`, `/queue/user/{userId}`
 
 ## 코딩 컨벤션
@@ -89,3 +90,7 @@ light-talk/
 - **Solapi 환경변수**: `SMS_SOLAPI_API_KEY`, `SMS_SOLAPI_API_SECRET`, `SMS_SOLAPI_SENDER`
 - **Blind Index Secret**: `BLIND_INDEX_SECRET` 환경변수로 관리, 프로덕션에서 반드시 변경
 - **이메일 필드 제거됨**: V9 마이그레이션으로 email 컬럼 완전 삭제, 전화번호+닉네임#태그 기반
+- **미디어 저장소**: Cloudflare R2 (S3 호환), Presigned URL 방식 (서버 프록시 없음)
+- **R2 환경변수**: `R2_ENDPOINT`, `R2_BUCKET`, `R2_ACCESS_KEY`, `R2_SECRET_KEY`, `R2_PUBLIC_URL`
+- **업로드 제한**: 이미지 10MB (JPEG/PNG/WebP/GIF), 동영상 50MB/3분 (MP4/MOV/WebM)
+- **버킷 구조**: `profiles/{userId}/{uuid}.{ext}`, `chats/{roomId}/{uuid}.{ext}`

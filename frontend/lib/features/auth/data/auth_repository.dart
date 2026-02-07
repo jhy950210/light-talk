@@ -85,4 +85,11 @@ class AuthRepository {
     );
     return TokenResponse.fromJson(response.data as Map<String, dynamic>);
   }
+
+  Future<void> withdrawUser(String password) async {
+    await _client.delete(
+      ApiConstants.withdrawUser,
+      data: {'password': password},
+    );
+  }
 }

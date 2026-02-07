@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'package:dio/dio.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/network/dio_client.dart';
 import 'models/chat_room_model.dart';
@@ -111,10 +113,70 @@ class ChatRepository {
     return const MessagePage(messages: [], hasMore: false);
   }
 
+  Future<void> deleteMessage(int roomId, int messageId) async {
+    await _client.delete(
+      ApiConstants.deleteMessage(roomId, messageId),
+    );
+  }
+
   Future<void> markAsRead(int roomId, int messageId) async {
     await _client.put(
       ApiConstants.readReceipt(roomId),
       data: {'messageId': messageId},
+    );
+  }
+
+  /// Get a presigned URL for uploading media to R2
+  Future<PresignedUrlResult> getPresignedUrl({
+    required String fileName,
+    required String contentType,
+    required int contentLength,
+    required String purpose,
+    int? chatRoomId,
+  }) async {
+    final response = await _client.post(
+      ApiConstants.presignUpload,
+      data: {
+        'fileName': fileName,
+        'contentType': contentType,
+        'contentLength': contentLength,
+        'purpose': purpose,
+        if (chatRoomId != null) 'chatRoomId': chatRoomId,
+      },
+    );
+    final data = response.data;
+    final result = data is Map<String, dynamic> && data.containsKey('data')
+        ? data['data'] as Map<String, dynamic>
+        : data as Map<String, dynamic>;
+    return PresignedUrlResult(
+      uploadUrl: result['uploadUrl'] as String,
+      publicUrl: result['publicUrl'] as String,
+    );
+  }
+
+  /// Upload a file directly to R2 using a presigned URL
+  Future<void> uploadToR2({
+    required String uploadUrl,
+    required File file,
+    required String contentType,
+    void Function(double progress)? onProgress,
+  }) async {
+    final dio = Dio();
+    final fileLength = await file.length();
+    await dio.put(
+      uploadUrl,
+      data: file.openRead(),
+      options: Options(
+        headers: {
+          'Content-Type': contentType,
+          'Content-Length': fileLength,
+        },
+      ),
+      onSendProgress: (sent, total) {
+        if (onProgress != null && total > 0) {
+          onProgress(sent / total);
+        }
+      },
     );
   }
 }
@@ -128,5 +190,15 @@ class MessagePage {
     required this.messages,
     required this.hasMore,
     this.nextCursor,
+  });
+}
+
+class PresignedUrlResult {
+  final String uploadUrl;
+  final String publicUrl;
+
+  const PresignedUrlResult({
+    required this.uploadUrl,
+    required this.publicUrl,
   });
 }

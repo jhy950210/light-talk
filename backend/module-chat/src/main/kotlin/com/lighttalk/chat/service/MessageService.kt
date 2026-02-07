@@ -99,6 +99,40 @@ class MessageService(
         }
     }
 
+    @Transactional
+    fun deleteMessage(chatRoomId: Long, messageId: Long, userId: Long) {
+        // Validate chat room exists
+        if (!chatRoomRepository.existsById(chatRoomId)) {
+            throw ApiException(ErrorCode.CHAT_ROOM_NOT_FOUND)
+        }
+
+        // Validate user is a member
+        chatMemberRepository.findByChatRoomIdAndUserId(chatRoomId, userId)
+            ?: throw ApiException(ErrorCode.NOT_CHAT_MEMBER)
+
+        val message = messageRepository.findById(messageId)
+            .orElseThrow { ApiException(ErrorCode.MESSAGE_NOT_FOUND) }
+
+        // Check if already deleted
+        if (message.isDeleted) {
+            throw ApiException(ErrorCode.MESSAGE_ALREADY_DELETED)
+        }
+
+        // Only the sender can delete
+        if (!message.canBeDeletedBy(userId)) {
+            throw ApiException(ErrorCode.MESSAGE_DELETE_FORBIDDEN)
+        }
+
+        // 5-minute window check
+        if (!message.isWithinDeleteWindow()) {
+            throw ApiException(ErrorCode.MESSAGE_DELETE_EXPIRED)
+        }
+
+        message.softDelete()
+        messageRepository.save(message)
+        log.debug("Message soft-deleted: id={}, chatRoomId={}, userId={}", messageId, chatRoomId, userId)
+    }
+
     private fun toMessageResponse(message: Message): MessageResponse {
         val sender = entityManager.find(User::class.java, message.senderId)
         return MessageResponse(
@@ -106,10 +140,11 @@ class MessageService(
             chatRoomId = message.chatRoomId,
             senderId = message.senderId,
             senderNickname = sender?.nickname ?: "Unknown",
-            content = message.content,
+            content = if (message.isDeleted) "" else message.content,
             type = message.type,
             createdAt = message.createdAt,
-            isRead = false
+            isRead = false,
+            deletedAt = message.deletedAt
         )
     }
 }

@@ -118,8 +118,9 @@ class ChatRoomService(
         val lastMessageInfo = lastMessage?.let {
             LastMessageInfo(
                 id = it.id,
-                content = it.content,
+                content = if (it.isDeleted) "" else it.content,
                 senderId = it.senderId,
+                type = it.type.name,
                 createdAt = it.createdAt
             )
         }

@@ -11,6 +11,7 @@ import '../../features/chat/presentation/chat_room_screen.dart';
 import '../../features/chat/providers/chat_provider.dart';
 import '../../features/friends/presentation/add_friend_screen.dart';
 import '../../features/friends/presentation/friends_screen.dart';
+import '../../features/settings/presentation/settings_screen.dart';
 import '../widgets/main_shell.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -85,6 +86,13 @@ final routerProvider = Provider<GoRouter>((ref) {
             ),
           ),
         ],
+      ),
+
+      // ── Settings (full screen, outside shell) ──
+      GoRoute(
+        path: '/settings',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const SettingsScreen(),
       ),
 
       // ── Chat Room (full screen, outside shell) ──

@@ -260,6 +260,22 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = const AuthState();
   }
 
+  Future<bool> withdrawUser(String password) async {
+    state = state.copyWith(isLoading: true, errorMessage: null);
+    try {
+      await _repository.withdrawUser(password);
+      await _clearStorage();
+      state = const AuthState();
+      return true;
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: _parseError(e),
+      );
+      return false;
+    }
+  }
+
   Future<void> _saveTokens(TokenResponse response) async {
     await _prefs.setString(
         ApiConstants.accessTokenKey, response.accessToken);

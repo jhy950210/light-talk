@@ -1,6 +1,7 @@
 package com.lighttalk.chat.service
 
 import com.lighttalk.chat.dto.ChatMessageEvent
+import com.lighttalk.chat.dto.MessageDeletedEvent
 import com.lighttalk.chat.dto.MessageResponse
 import com.lighttalk.chat.dto.ReadReceiptEvent
 import com.lighttalk.chat.repository.ChatMemberRepository
@@ -32,6 +33,24 @@ class ChatNotificationService(
                 messagingTemplate.convertAndSend(userDestination, event)
                 log.debug("Message sent to user queue: userId={}, messageId={}", member.userId, message.id)
             }
+    }
+
+    fun notifyMessageDeleted(chatRoomId: Long, messageId: Long) {
+        val event = MessageDeletedEvent(
+            chatRoomId = chatRoomId,
+            messageId = messageId
+        )
+
+        val destination = "/topic/chat/$chatRoomId"
+        messagingTemplate.convertAndSend(destination, event)
+        log.debug("Message deleted event broadcast to {}: messageId={}", destination, messageId)
+
+        // Also send to individual user queues
+        val members = chatMemberRepository.findByChatRoomId(chatRoomId)
+        members.forEach { member ->
+            val userDestination = "/queue/user/${member.userId}"
+            messagingTemplate.convertAndSend(userDestination, event)
+        }
     }
 
     fun notifyReadReceipt(chatRoomId: Long, userId: Long, messageId: Long) {

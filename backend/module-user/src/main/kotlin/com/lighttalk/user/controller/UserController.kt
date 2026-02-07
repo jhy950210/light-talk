@@ -3,10 +3,12 @@ package com.lighttalk.user.controller
 import com.lighttalk.core.dto.ApiResponse
 import com.lighttalk.user.dto.UpdateProfileRequest
 import com.lighttalk.user.dto.UserResponse
+import com.lighttalk.user.dto.WithdrawalRequest
 import com.lighttalk.user.service.UserService
 import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -33,6 +35,15 @@ class UserController(
     ): ResponseEntity<ApiResponse<UserResponse>> {
         val response = userService.updateProfile(userId, request)
         return ResponseEntity.ok(ApiResponse.success(response))
+    }
+
+    @DeleteMapping("/me")
+    fun withdrawUser(
+        @AuthenticationPrincipal userId: Long,
+        @Valid @RequestBody request: WithdrawalRequest
+    ): ResponseEntity<ApiResponse<Nothing>> {
+        userService.withdrawUser(userId, request.password)
+        return ResponseEntity.ok(ApiResponse.success())
     }
 
     @GetMapping("/search")

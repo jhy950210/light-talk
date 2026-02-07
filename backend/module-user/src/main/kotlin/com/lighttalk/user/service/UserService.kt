@@ -5,6 +5,7 @@ import com.lighttalk.core.exception.ErrorCode
 import com.lighttalk.user.dto.UpdateProfileRequest
 import com.lighttalk.user.dto.UserResponse
 import com.lighttalk.user.repository.UserRepository
+import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -12,7 +13,8 @@ import org.springframework.transaction.annotation.Transactional
 @Transactional(readOnly = true)
 class UserService(
     private val userRepository: UserRepository,
-    private val onlineStatusService: OnlineStatusService
+    private val onlineStatusService: OnlineStatusService,
+    private val passwordEncoder: PasswordEncoder
 ) {
 
     fun getProfile(userId: Long): UserResponse {
@@ -75,5 +77,22 @@ class UserService(
                 isOnline = onlineStatusService.isOnline(user.id)
             )
         }
+    }
+
+    @Transactional
+    fun withdrawUser(userId: Long, password: String) {
+        val user = userRepository.findById(userId)
+            .orElseThrow { ApiException(ErrorCode.USER_NOT_FOUND) }
+
+        // Verify password
+        if (!passwordEncoder.matches(password, user.passwordHash)) {
+            throw ApiException(ErrorCode.INVALID_PASSWORD)
+        }
+
+        // Clear Redis online status
+        onlineStatusService.setOffline(userId)
+
+        // Hard delete user — DB CASCADE handles friendships, chat_members, messages
+        userRepository.delete(user)
     }
 }
