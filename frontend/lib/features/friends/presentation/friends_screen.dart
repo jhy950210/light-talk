@@ -204,7 +204,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
           isOnline: friend.isOnline,
         ),
         title: Text(
-          friend.nickname,
+          friend.displayName,
           style: const TextStyle(
             fontWeight: FontWeight.w500,
             fontSize: 16,

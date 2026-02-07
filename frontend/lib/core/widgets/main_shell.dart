@@ -18,7 +18,6 @@ class MainShell extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentIndex = _currentIndex(context);
-    final authState = ref.watch(authProvider);
 
     return Scaffold(
       body: child,
@@ -27,7 +26,7 @@ class MainShell extends ConsumerWidget {
           color: Colors.white,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.06),
+              color: Colors.black.withValues(alpha: 0.06),
               blurRadius: 10,
               offset: const Offset(0, -2),
             ),

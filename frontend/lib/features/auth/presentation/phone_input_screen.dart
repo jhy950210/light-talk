@@ -4,33 +4,40 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../providers/auth_provider.dart';
 
-class LoginScreen extends ConsumerStatefulWidget {
-  const LoginScreen({super.key});
+class PhoneInputScreen extends ConsumerStatefulWidget {
+  const PhoneInputScreen({super.key});
 
   @override
-  ConsumerState<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<PhoneInputScreen> createState() => _PhoneInputScreenState();
 }
 
-class _LoginScreenState extends ConsumerState<LoginScreen> {
+class _PhoneInputScreenState extends ConsumerState<PhoneInputScreen> {
   final _formKey = GlobalKey<FormState>();
   final _phoneController = TextEditingController();
-  final _passwordController = TextEditingController();
-  bool _obscurePassword = true;
 
   @override
   void dispose() {
     _phoneController.dispose();
-    _passwordController.dispose();
     super.dispose();
   }
 
-  void _handleLogin() {
+  /// Validate Korean mobile phone format
+  String? _validatePhone(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return '전화번호를 입력해주세요.';
+    }
+    // Remove dashes and spaces for validation
+    final cleaned = value.replaceAll(RegExp(r'[\s-]'), '');
+    if (!RegExp(r'^01[016789]\d{7,8}$').hasMatch(cleaned)) {
+      return '올바른 휴대폰 번호를 입력해주세요.';
+    }
+    return null;
+  }
+
+  void _handleSendOtp() {
     if (!_formKey.currentState!.validate()) return;
     final cleaned = _phoneController.text.replaceAll(RegExp(r'[\s-]'), '');
-    ref.read(authProvider.notifier).phoneLogin(
-          cleaned,
-          _passwordController.text,
-        );
+    ref.read(authProvider.notifier).sendOtp(cleaned);
   }
 
   @override
@@ -38,8 +45,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final authState = ref.watch(authProvider);
 
     ref.listen<AuthState>(authProvider, (previous, next) {
-      if (next.isLoggedIn) {
-        context.go('/friends');
+      if (next.otpSent && previous?.otpSent != true) {
+        context.go('/register/otp');
       }
       if (next.errorMessage != null) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -66,7 +73,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // ── Logo / Title ─────────────────────────
+                  // ── Logo / Icon ────────────────────────────
                   const Icon(
                     Icons.chat_bubble_rounded,
                     size: 72,
@@ -84,10 +91,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '로그인하여 계속하기',
+                    '전화번호로 시작하기',
                     textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: const Color(0xFF8E8E93),
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          color: const Color(0xFF1C1C1E),
+                          fontWeight: FontWeight.w600,
                         ),
                   ),
                   const SizedBox(height: 48),
@@ -96,7 +104,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   TextFormField(
                     controller: _phoneController,
                     keyboardType: TextInputType.phone,
-                    textInputAction: TextInputAction.next,
+                    textInputAction: TextInputAction.done,
+                    onFieldSubmitted: (_) => _handleSendOtp(),
                     maxLength: 13,
                     onChanged: (value) {
                       final filtered = value.replaceAll(RegExp(r'[^\d-]'), '');
@@ -108,62 +117,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       }
                     },
                     decoration: const InputDecoration(
-                      hintText: '전화번호',
+                      hintText: '010-1234-5678',
                       prefixIcon: Icon(Icons.phone_outlined),
                       counterText: '',
                     ),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return '전화번호를 입력해주세요.';
-                      }
-                      final cleaned =
-                          value.replaceAll(RegExp(r'[\s-]'), '');
-                      if (!RegExp(r'^01[016789]\d{7,8}$')
-                          .hasMatch(cleaned)) {
-                        return '올바른 휴대폰 번호를 입력해주세요.';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-
-                  // ── Password Field ───────────────────────
-                  TextFormField(
-                    controller: _passwordController,
-                    obscureText: _obscurePassword,
-                    textInputAction: TextInputAction.done,
-                    onFieldSubmitted: (_) => _handleLogin(),
-                    decoration: InputDecoration(
-                      hintText: '비밀번호',
-                      prefixIcon: const Icon(Icons.lock_outlined),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscurePassword
-                              ? Icons.visibility_off_outlined
-                              : Icons.visibility_outlined,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _obscurePassword = !_obscurePassword;
-                          });
-                        },
-                      ),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return '비밀번호를 입력해주세요.';
-                      }
-                      if (value.length < 6) {
-                        return '비밀번호는 6자 이상이어야 합니다.';
-                      }
-                      return null;
-                    },
+                    validator: _validatePhone,
                   ),
                   const SizedBox(height: 32),
 
-                  // ── Login Button ─────────────────────────
+                  // ── Send OTP Button ────────────────────────
                   ElevatedButton(
-                    onPressed: authState.isLoading ? null : _handleLogin,
+                    onPressed: authState.isLoading ? null : _handleSendOtp,
                     child: authState.isLoading
                         ? const SizedBox(
                             width: 24,
@@ -173,24 +137,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               color: Colors.white,
                             ),
                           )
-                        : const Text('로그인'),
+                        : const Text('인증번호 받기'),
                   ),
                   const SizedBox(height: 24),
 
-                  // ── Register Link ────────────────────────
+                  // ── Login Link ─────────────────────────────
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        '계정이 없으신가요? ',
+                        '이미 계정이 있으신가요? ',
                         style:
                             Theme.of(context).textTheme.bodyMedium?.copyWith(
                                   color: const Color(0xFF8E8E93),
                                 ),
                       ),
                       TextButton(
-                        onPressed: () => context.go('/register/phone'),
-                        child: const Text('회원가입'),
+                        onPressed: () => context.go('/login'),
+                        child: const Text('로그인'),
                       ),
                     ],
                   ),

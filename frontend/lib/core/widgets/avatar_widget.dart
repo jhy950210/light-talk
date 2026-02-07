@@ -29,7 +29,7 @@ class AvatarWidget extends StatelessWidget {
           )
         : CircleAvatar(
             radius: radius,
-            backgroundColor: AppTheme.primaryLight.withOpacity(0.3),
+            backgroundColor: AppTheme.primaryLight.withValues(alpha: 0.3),
             child: Text(
               initial,
               style: TextStyle(

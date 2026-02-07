@@ -78,6 +78,10 @@ class _AuthInterceptor extends Interceptor {
       ApiConstants.login,
       ApiConstants.register,
       ApiConstants.refresh,
+      ApiConstants.sendOtp,
+      ApiConstants.verifyOtp,
+      ApiConstants.phoneRegister,
+      ApiConstants.phoneLogin,
     ];
     if (!noAuthPaths.contains(options.path)) {
       final token = _prefs.getString(ApiConstants.accessTokenKey);

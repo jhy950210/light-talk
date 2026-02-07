@@ -1,5 +1,8 @@
 import 'dart:async';
-import 'package:stomp_dart_client/stomp_dart_client.dart';
+import 'package:stomp_dart_client/stomp.dart';
+import 'package:stomp_dart_client/stomp_config.dart';
+import 'package:stomp_dart_client/stomp_frame.dart';
+import 'package:stomp_dart_client/stomp_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../constants/api_constants.dart';
 
@@ -19,8 +22,8 @@ class StompService {
   Stream<bool> get connectionStream => _connectionController.stream;
 
   void connect({
-    VoidCallback? onConnect,
-    VoidCallback? onDisconnect,
+    void Function()? onConnect,
+    void Function()? onDisconnect,
     Function(StompFrame)? onError,
   }) {
     final token = _prefs.getString(ApiConstants.accessTokenKey) ?? '';

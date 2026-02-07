@@ -23,7 +23,7 @@ class OnlineIndicator extends StatelessWidget {
         boxShadow: isOnline
             ? [
                 BoxShadow(
-                  color: AppTheme.onlineGreen.withOpacity(0.4),
+                  color: AppTheme.onlineGreen.withValues(alpha: 0.4),
                   blurRadius: 4,
                   spreadRadius: 1,
                 ),

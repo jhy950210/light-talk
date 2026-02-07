@@ -1,8 +1,8 @@
-class LoginRequest {
+class PhoneLoginRequest {
   final String phoneNumber;
   final String password;
 
-  const LoginRequest({
+  const PhoneLoginRequest({
     required this.phoneNumber,
     required this.password,
   });

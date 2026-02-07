@@ -1,49 +1,51 @@
 class FriendModel {
   final int id;
   final String nickname;
+  final String tag;
   final String? profileImageUrl;
   final bool isOnline;
-  final String email;
 
   const FriendModel({
     required this.id,
     required this.nickname,
+    this.tag = '',
     this.profileImageUrl,
     this.isOnline = false,
-    this.email = '',
   });
+
+  String get displayName => '$nickname#$tag';
 
   factory FriendModel.fromJson(Map<String, dynamic> json) {
     return FriendModel(
       id: json['id'] as int? ?? json['friendId'] as int? ?? 0,
       nickname: json['nickname'] as String? ?? '',
+      tag: json['tag'] as String? ?? '',
       profileImageUrl: json['profileImageUrl'] as String?,
       isOnline: json['isOnline'] as bool? ?? json['online'] as bool? ?? false,
-      email: json['email'] as String? ?? '',
     );
   }
 
   Map<String, dynamic> toJson() => {
         'id': id,
         'nickname': nickname,
+        'tag': tag,
         'profileImageUrl': profileImageUrl,
         'isOnline': isOnline,
-        'email': email,
       };
 
   FriendModel copyWith({
     int? id,
     String? nickname,
+    String? tag,
     String? profileImageUrl,
     bool? isOnline,
-    String? email,
   }) {
     return FriendModel(
       id: id ?? this.id,
       nickname: nickname ?? this.nickname,
+      tag: tag ?? this.tag,
       profileImageUrl: profileImageUrl ?? this.profileImageUrl,
       isOnline: isOnline ?? this.isOnline,
-      email: email ?? this.email,
     );
   }
 }
@@ -84,22 +86,24 @@ class FriendRequest {
 
 class UserSearchResult {
   final int id;
-  final String email;
   final String nickname;
+  final String tag;
   final String? profileImageUrl;
 
   const UserSearchResult({
     required this.id,
-    required this.email,
     required this.nickname,
+    this.tag = '',
     this.profileImageUrl,
   });
+
+  String get displayName => '$nickname#$tag';
 
   factory UserSearchResult.fromJson(Map<String, dynamic> json) {
     return UserSearchResult(
       id: json['id'] as int? ?? 0,
-      email: json['email'] as String? ?? '',
       nickname: json['nickname'] as String? ?? '',
+      tag: json['tag'] as String? ?? '',
       profileImageUrl: json['profileImageUrl'] as String?,
     );
   }

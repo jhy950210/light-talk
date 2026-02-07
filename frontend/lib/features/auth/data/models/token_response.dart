@@ -3,12 +3,14 @@ class TokenResponse {
   final String refreshToken;
   final int userId;
   final String nickname;
+  final String tag;
 
   const TokenResponse({
     required this.accessToken,
     required this.refreshToken,
     required this.userId,
     required this.nickname,
+    required this.tag,
   });
 
   factory TokenResponse.fromJson(Map<String, dynamic> json) {
@@ -19,6 +21,7 @@ class TokenResponse {
       refreshToken: data['refreshToken'] as String? ?? '',
       userId: data['userId'] as int? ?? 0,
       nickname: data['nickname'] as String? ?? '',
+      tag: data['tag'] as String? ?? '',
     );
   }
 }

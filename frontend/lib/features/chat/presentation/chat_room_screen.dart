@@ -270,7 +270,7 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           decoration: BoxDecoration(
-            color: const Color(0xFFE5E5EA).withOpacity(0.7),
+            color: const Color(0xFFE5E5EA).withValues(alpha: 0.7),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Text(
@@ -298,7 +298,7 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, -2),
           ),
@@ -497,7 +497,7 @@ class _MessageBubble extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           decoration: BoxDecoration(
-            color: const Color(0xFFE5E5EA).withOpacity(0.5),
+            color: const Color(0xFFE5E5EA).withValues(alpha: 0.5),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Text(

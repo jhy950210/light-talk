@@ -1,7 +1,9 @@
 import 'dart:convert';
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:stomp_dart_client/stomp_dart_client.dart';
+import 'package:stomp_dart_client/stomp_frame.dart';
+import 'package:stomp_dart_client/stomp_handler.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/network/stomp_service.dart';
 import '../../../core/providers/providers.dart';
@@ -83,9 +85,23 @@ class ChatRoomsNotifier extends StateNotifier<ChatRoomsState> {
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        errorMessage: 'Failed to load chats.',
+        errorMessage: _parseError(e),
       );
     }
+  }
+
+  String _parseError(dynamic e) {
+    if (e is DioException) {
+      final data = e.response?.data;
+      if (data is Map<String, dynamic>) {
+        final error = data['error'];
+        if (error is Map<String, dynamic> && error['message'] != null) {
+          return error['message'] as String;
+        }
+      }
+      return 'Server error. Please try again.';
+    }
+    return 'An unexpected error occurred.';
   }
 
   Future<ChatRoomModel> createDirectRoom(int friendId) async {
@@ -174,9 +190,23 @@ class MessagesNotifier extends StateNotifier<MessagesState> {
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        errorMessage: 'Failed to load messages.',
+        errorMessage: _parseError(e),
       );
     }
+  }
+
+  String _parseError(dynamic e) {
+    if (e is DioException) {
+      final data = e.response?.data;
+      if (data is Map<String, dynamic>) {
+        final error = data['error'];
+        if (error is Map<String, dynamic> && error['message'] != null) {
+          return error['message'] as String;
+        }
+      }
+      return 'Server error. Please try again.';
+    }
+    return 'An unexpected error occurred.';
   }
 
   Future<void> loadMoreMessages() async {
@@ -186,7 +216,7 @@ class MessagesNotifier extends StateNotifier<MessagesState> {
       final oldestId = state.messages.last.id;
       final page = await _repository.getMessages(
         roomId,
-        beforeId: oldestId,
+        cursor: oldestId,
       );
       state = state.copyWith(
         messages: [...state.messages, ...page.messages],

@@ -31,14 +31,14 @@ class _AddFriendScreenState extends ConsumerState<AddFriendScreen> {
     });
   }
 
-  Future<void> _addFriend(String email) async {
+  Future<void> _addFriend(int friendId) async {
     final success =
-        await ref.read(friendsProvider.notifier).addFriend(email);
+        await ref.read(friendsProvider.notifier).addFriend(friendId);
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            success ? 'Friend request sent!' : 'Failed to send request.',
+            success ? '친구 요청을 보냈습니다!' : '요청을 보내지 못했습니다.',
           ),
           backgroundColor: success ? AppTheme.onlineGreen : AppTheme.errorRed,
           behavior: SnackBarBehavior.floating,
@@ -74,7 +74,7 @@ class _AddFriendScreenState extends ConsumerState<AddFriendScreen> {
               autofocus: true,
               onChanged: _onSearchChanged,
               decoration: InputDecoration(
-                hintText: 'Search by email or nickname',
+                hintText: '닉네임 또는 닉네임#태그로 검색',
                 prefixIcon: const Icon(Icons.search),
                 suffixIcon: _searchController.text.isNotEmpty
                     ? IconButton(
@@ -117,7 +117,7 @@ class _AddFriendScreenState extends ConsumerState<AddFriendScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            'Search for users by email',
+            '닉네임으로 사용자를 검색하세요',
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   color: const Color(0xFF8E8E93),
                 ),
@@ -146,7 +146,7 @@ class _AddFriendScreenState extends ConsumerState<AddFriendScreen> {
           ),
           const SizedBox(height: 4),
           Text(
-            'Try a different email or nickname',
+            '다른 닉네임 또는 닉네임#태그로 검색해보세요',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: const Color(0xFFC7C7CC),
                 ),
@@ -179,7 +179,7 @@ class _AddFriendScreenState extends ConsumerState<AddFriendScreen> {
             ),
           ),
           subtitle: Text(
-            user.email,
+            '#${user.tag}',
             style: const TextStyle(
               fontSize: 13,
               color: Color(0xFF8E8E93),
@@ -189,13 +189,13 @@ class _AddFriendScreenState extends ConsumerState<AddFriendScreen> {
             width: 100,
             height: 36,
             child: ElevatedButton(
-              onPressed: () => _addFriend(user.email),
+              onPressed: () => _addFriend(user.id),
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size(100, 36),
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 textStyle: const TextStyle(fontSize: 13),
               ),
-              child: const Text('Add'),
+              child: const Text('추가'),
             ),
           ),
         );

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../features/auth/presentation/login_screen.dart';
+import '../../features/auth/presentation/otp_screen.dart';
+import '../../features/auth/presentation/phone_input_screen.dart';
 import '../../features/auth/presentation/register_screen.dart';
 import '../../features/auth/providers/auth_provider.dart';
 import '../../features/chat/presentation/chat_list_screen.dart';
@@ -15,15 +17,17 @@ final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
 final routerProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authProvider);
+  // Only watch isLoggedIn to avoid router recreation on OTP flow state changes
+  final isLoggedIn = ref.watch(authProvider.select((s) => s.isLoggedIn));
 
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
     initialLocation: '/friends',
     redirect: (context, state) {
-      final isLoggedIn = authState.isLoggedIn;
       final isAuthRoute = state.matchedLocation == '/login' ||
-          state.matchedLocation == '/register';
+          state.matchedLocation == '/register' ||
+          state.matchedLocation == '/register/phone' ||
+          state.matchedLocation == '/register/otp';
 
       if (!isLoggedIn && !isAuthRoute) {
         return '/login';
@@ -39,6 +43,16 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/login',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: '/register/phone',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const PhoneInputScreen(),
+      ),
+      GoRoute(
+        path: '/register/otp',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const OtpScreen(),
       ),
       GoRoute(
         path: '/register',

@@ -9,7 +9,7 @@ class ChatRepository {
   ChatRepository(this._client);
 
   Future<List<ChatRoomModel>> getChatRooms() async {
-    final response = await _client.get(ApiConstants.chatRooms);
+    final response = await _client.get(ApiConstants.chats);
     final data = response.data;
 
     List<dynamic> list;
@@ -40,10 +40,9 @@ class ChatRepository {
 
   Future<ChatRoomModel> createDirectChatRoom(int friendId) async {
     final response = await _client.post(
-      ApiConstants.chatRooms,
+      ApiConstants.chats,
       data: {
-        'type': 'DIRECT',
-        'memberIds': [friendId],
+        'targetUserId': friendId,
       },
     );
     final data = response.data;
@@ -55,18 +54,18 @@ class ChatRepository {
   }
 
   /// Fetch messages with cursor-based pagination.
-  /// [beforeId] = fetch messages older than this ID.
-  /// [limit] = number of messages to fetch.
+  /// [cursor] = fetch messages older than this ID.
+  /// [size] = number of messages to fetch.
   Future<MessagePage> getMessages(
     int roomId, {
-    int? beforeId,
-    int limit = 30,
+    int? cursor,
+    int size = 20,
   }) async {
     final queryParams = <String, dynamic>{
-      'limit': limit,
+      'size': size,
     };
-    if (beforeId != null) {
-      queryParams['beforeId'] = beforeId;
+    if (cursor != null) {
+      queryParams['cursor'] = cursor;
     }
 
     final response = await _client.get(
@@ -97,13 +96,14 @@ class ChatRepository {
     }
 
     // If response is a flat list
-    if (data is List) {
-      final messages = data
+    if (response.data is List) {
+      final list = response.data as List<dynamic>;
+      final messages = list
           .map((e) => MessageModel.fromJson(e as Map<String, dynamic>))
           .toList();
       return MessagePage(
         messages: messages,
-        hasMore: messages.length >= limit,
+        hasMore: messages.length >= size,
         nextCursor: messages.isNotEmpty ? messages.last.id : null,
       );
     }
@@ -112,9 +112,9 @@ class ChatRepository {
   }
 
   Future<void> markAsRead(int roomId, int messageId) async {
-    await _client.post(
+    await _client.put(
       ApiConstants.readReceipt(roomId),
-      data: {'lastReadMessageId': messageId},
+      data: {'messageId': messageId},
     );
   }
 }

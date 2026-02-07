@@ -25,10 +25,10 @@ class FriendRepository {
         .toList();
   }
 
-  Future<void> addFriend(String email) async {
+  Future<void> addFriend(int friendId) async {
     await _client.post(
       ApiConstants.friends,
-      data: {'email': email},
+      data: {'friendId': friendId},
     );
   }
 
@@ -38,18 +38,18 @@ class FriendRepository {
 
   Future<void> acceptFriendRequest(int requestId) async {
     await _client.put(
-      '${ApiConstants.friendRequests}/$requestId/accept',
+      '${ApiConstants.friends}/$requestId/accept',
     );
   }
 
   Future<void> rejectFriendRequest(int requestId) async {
-    await _client.put(
-      '${ApiConstants.friendRequests}/$requestId/reject',
+    await _client.delete(
+      '${ApiConstants.friends}/$requestId',
     );
   }
 
   Future<List<FriendRequest>> getFriendRequests() async {
-    final response = await _client.get(ApiConstants.friendRequests);
+    final response = await _client.get(ApiConstants.friendsPending);
     final data = response.data;
 
     List<dynamic> list;
@@ -73,17 +73,16 @@ class FriendRepository {
     );
     final data = response.data;
 
-    List<dynamic> list;
+    // Response is now always a list
     if (data is Map<String, dynamic> && data.containsKey('data')) {
-      list = data['data'] as List<dynamic>? ?? [];
-    } else if (data is List) {
-      list = data;
-    } else {
-      list = [];
+      final inner = data['data'];
+      if (inner is List) {
+        return inner
+            .map((e) => UserSearchResult.fromJson(e as Map<String, dynamic>))
+            .toList();
+      }
     }
 
-    return list
-        .map((e) => UserSearchResult.fromJson(e as Map<String, dynamic>))
-        .toList();
+    return [];
   }
 }

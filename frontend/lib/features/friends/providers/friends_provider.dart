@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/providers/providers.dart';
 import '../data/friend_repository.dart';
@@ -49,18 +50,18 @@ class FriendsNotifier extends StateNotifier<FriendsState> {
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        errorMessage: 'Failed to load friends.',
+        errorMessage: _parseError(e),
       );
     }
   }
 
-  Future<bool> addFriend(String email) async {
+  Future<bool> addFriend(int friendId) async {
     try {
-      await _repository.addFriend(email);
+      await _repository.addFriend(friendId);
       await loadFriends();
       return true;
     } catch (e) {
-      state = state.copyWith(errorMessage: 'Failed to send friend request.');
+      state = state.copyWith(errorMessage: _parseError(e));
       return false;
     }
   }
@@ -72,8 +73,22 @@ class FriendsNotifier extends StateNotifier<FriendsState> {
         friends: state.friends.where((f) => f.id != friendId).toList(),
       );
     } catch (e) {
-      state = state.copyWith(errorMessage: 'Failed to remove friend.');
+      state = state.copyWith(errorMessage: _parseError(e));
     }
+  }
+
+  String _parseError(dynamic e) {
+    if (e is DioException) {
+      final data = e.response?.data;
+      if (data is Map<String, dynamic>) {
+        final error = data['error'];
+        if (error is Map<String, dynamic> && error['message'] != null) {
+          return error['message'] as String;
+        }
+      }
+      return 'Server error. Please try again.';
+    }
+    return 'An unexpected error occurred.';
   }
 
   void updateOnlineStatus(int userId, bool isOnline) {
@@ -131,9 +146,23 @@ class UserSearchNotifier extends StateNotifier<UserSearchState> {
     } catch (e) {
       state = state.copyWith(
         isSearching: false,
-        errorMessage: 'Search failed.',
+        errorMessage: _parseError(e),
       );
     }
+  }
+
+  String _parseError(dynamic e) {
+    if (e is DioException) {
+      final data = e.response?.data;
+      if (data is Map<String, dynamic>) {
+        final error = data['error'];
+        if (error is Map<String, dynamic> && error['message'] != null) {
+          return error['message'] as String;
+        }
+      }
+      return 'Server error. Please try again.';
+    }
+    return 'An unexpected error occurred.';
   }
 
   void clear() {
