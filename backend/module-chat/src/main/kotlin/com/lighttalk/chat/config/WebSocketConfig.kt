@@ -14,9 +14,14 @@ class WebSocketConfig(
 ) : WebSocketMessageBrokerConfigurer {
 
     override fun registerStompEndpoints(registry: StompEndpointRegistry) {
+        // SockJS endpoint for web clients
         registry.addEndpoint("/ws")
             .setAllowedOriginPatterns("*")
             .withSockJS()
+
+        // Raw WebSocket endpoint for mobile clients
+        registry.addEndpoint("/ws/raw")
+            .setAllowedOriginPatterns("*")
     }
 
     override fun configureMessageBroker(registry: MessageBrokerRegistry) {
