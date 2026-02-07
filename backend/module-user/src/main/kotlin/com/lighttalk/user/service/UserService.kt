@@ -49,7 +49,7 @@ class UserService(
         )
     }
 
-    fun searchUsers(query: String): List<UserResponse> {
+    fun searchUsers(currentUserId: Long, query: String): List<UserResponse> {
         // If query contains #, search by exact nickname#tag
         if (query.contains("#")) {
             val parts = query.split("#", limit = 2)
@@ -57,6 +57,7 @@ class UserService(
             val tag = parts[1]
             val user = userRepository.findByNicknameAndTag(nickname, tag)
                 ?: return emptyList()
+            if (user.id == currentUserId) return emptyList()
             return listOf(UserResponse(
                 id = user.id,
                 nickname = user.nickname,
@@ -68,7 +69,7 @@ class UserService(
 
         // Otherwise search by nickname substring
         val users = userRepository.findByNicknameContainingIgnoreCase(query)
-        return users.map { user ->
+        return users.filter { it.id != currentUserId }.map { user ->
             UserResponse(
                 id = user.id,
                 nickname = user.nickname,

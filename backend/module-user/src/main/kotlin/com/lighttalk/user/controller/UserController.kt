@@ -51,7 +51,7 @@ class UserController(
         @AuthenticationPrincipal userId: Long,
         @RequestParam q: String
     ): ResponseEntity<ApiResponse<List<UserResponse>>> {
-        val response = userService.searchUsers(q)
+        val response = userService.searchUsers(userId, q)
         return ResponseEntity.ok(ApiResponse.success(response))
     }
 }
