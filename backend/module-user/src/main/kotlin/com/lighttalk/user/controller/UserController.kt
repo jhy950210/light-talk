@@ -36,11 +36,11 @@ class UserController(
     }
 
     @GetMapping("/search")
-    fun searchByEmail(
+    fun searchUsers(
         @AuthenticationPrincipal userId: Long,
-        @RequestParam email: String
-    ): ResponseEntity<ApiResponse<UserResponse>> {
-        val response = userService.searchByEmail(email)
+        @RequestParam q: String
+    ): ResponseEntity<ApiResponse<List<UserResponse>>> {
+        val response = userService.searchUsers(q)
         return ResponseEntity.ok(ApiResponse.success(response))
     }
 }

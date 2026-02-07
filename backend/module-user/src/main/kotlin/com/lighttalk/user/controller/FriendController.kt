@@ -36,7 +36,7 @@ class FriendController(
         @AuthenticationPrincipal userId: Long,
         @Valid @RequestBody request: AddFriendRequest
     ): ResponseEntity<ApiResponse<FriendResponse>> {
-        val response = friendService.addFriend(userId, request.friendEmail)
+        val response = friendService.addFriend(userId, request.friendId)
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(response))
     }
 

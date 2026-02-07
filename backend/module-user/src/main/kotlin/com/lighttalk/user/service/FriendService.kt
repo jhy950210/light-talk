@@ -19,9 +19,9 @@ class FriendService(
 ) {
 
     @Transactional
-    fun addFriend(userId: Long, friendEmail: String): FriendResponse {
-        val friend = userRepository.findByEmail(friendEmail)
-            ?: throw ApiException(ErrorCode.USER_NOT_FOUND)
+    fun addFriend(userId: Long, friendId: Long): FriendResponse {
+        val friend = userRepository.findById(friendId)
+            .orElseThrow { ApiException(ErrorCode.USER_NOT_FOUND) }
 
         if (friend.id == userId) {
             throw ApiException(ErrorCode.SELF_FRIEND_REQUEST)
@@ -51,6 +51,7 @@ class FriendService(
             return FriendResponse(
                 id = friend.id,
                 nickname = friend.nickname,
+                tag = friend.tag,
                 profileImageUrl = friend.profileImageUrl,
                 isOnline = onlineStatusService.isOnline(friend.id)
             )
@@ -66,6 +67,7 @@ class FriendService(
         return FriendResponse(
             id = friend.id,
             nickname = friend.nickname,
+            tag = friend.tag,
             profileImageUrl = friend.profileImageUrl,
             isOnline = onlineStatusService.isOnline(friend.id)
         )
@@ -106,6 +108,7 @@ class FriendService(
         return FriendResponse(
             id = friend.id,
             nickname = friend.nickname,
+            tag = friend.tag,
             profileImageUrl = friend.profileImageUrl,
             isOnline = onlineStatusService.isOnline(friend.id)
         )
@@ -156,6 +159,7 @@ class FriendService(
             FriendResponse(
                 id = friend.id,
                 nickname = friend.nickname,
+                tag = friend.tag,
                 profileImageUrl = friend.profileImageUrl,
                 isOnline = onlineUserIds.contains(friend.id)
             )
@@ -175,6 +179,7 @@ class FriendService(
             FriendResponse(
                 id = requester.id,
                 nickname = requester.nickname,
+                tag = requester.tag,
                 profileImageUrl = requester.profileImageUrl,
                 isOnline = onlineUserIds.contains(requester.id)
             )

@@ -21,8 +21,8 @@ class UserService(
 
         return UserResponse(
             id = user.id,
-            email = user.email,
             nickname = user.nickname,
+            tag = user.tag,
             profileImageUrl = user.profileImageUrl,
             isOnline = onlineStatusService.isOnline(user.id)
         )
@@ -40,23 +40,40 @@ class UserService(
 
         return UserResponse(
             id = savedUser.id,
-            email = savedUser.email,
             nickname = savedUser.nickname,
+            tag = savedUser.tag,
             profileImageUrl = savedUser.profileImageUrl,
             isOnline = onlineStatusService.isOnline(savedUser.id)
         )
     }
 
-    fun searchByEmail(email: String): UserResponse {
-        val user = userRepository.findByEmail(email)
-            ?: throw ApiException(ErrorCode.USER_NOT_FOUND)
+    fun searchUsers(query: String): List<UserResponse> {
+        // If query contains #, search by exact nickname#tag
+        if (query.contains("#")) {
+            val parts = query.split("#", limit = 2)
+            val nickname = parts[0]
+            val tag = parts[1]
+            val user = userRepository.findByNicknameAndTag(nickname, tag)
+                ?: return emptyList()
+            return listOf(UserResponse(
+                id = user.id,
+                nickname = user.nickname,
+                tag = user.tag,
+                profileImageUrl = user.profileImageUrl,
+                isOnline = onlineStatusService.isOnline(user.id)
+            ))
+        }
 
-        return UserResponse(
-            id = user.id,
-            email = user.email,
-            nickname = user.nickname,
-            profileImageUrl = user.profileImageUrl,
-            isOnline = onlineStatusService.isOnline(user.id)
-        )
+        // Otherwise search by nickname substring
+        val users = userRepository.findByNicknameContainingIgnoreCase(query)
+        return users.map { user ->
+            UserResponse(
+                id = user.id,
+                nickname = user.nickname,
+                tag = user.tag,
+                profileImageUrl = user.profileImageUrl,
+                isOnline = onlineStatusService.isOnline(user.id)
+            )
+        }
     }
 }
