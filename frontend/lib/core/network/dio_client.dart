@@ -94,7 +94,8 @@ class _AuthInterceptor extends Interceptor {
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) async {
-    if (err.response?.statusCode == 401 &&
+    final statusCode = err.response?.statusCode;
+    if ((statusCode == 401 || statusCode == 403) &&
         err.requestOptions.path != ApiConstants.refresh &&
         err.requestOptions.path != ApiConstants.login) {
       if (!_isRefreshing) {
