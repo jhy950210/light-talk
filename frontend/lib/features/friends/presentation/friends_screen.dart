@@ -46,10 +46,6 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
             icon: const Icon(Icons.person_add_outlined),
             onPressed: () => context.push('/friends/add'),
           ),
-          IconButton(
-            icon: const Icon(Icons.settings_outlined),
-            onPressed: () => context.push('/settings'),
-          ),
         ],
       ),
       body: state.isLoading && state.friends.isEmpty

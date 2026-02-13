@@ -52,34 +52,28 @@ class FriendModel {
 
 class FriendRequest {
   final int id;
-  final int fromUserId;
-  final String fromNickname;
-  final String? fromProfileImageUrl;
-  final String status;
-  final DateTime createdAt;
+  final int friendshipId;
+  final String nickname;
+  final String tag;
+  final String? profileImageUrl;
 
   const FriendRequest({
     required this.id,
-    required this.fromUserId,
-    required this.fromNickname,
-    this.fromProfileImageUrl,
-    required this.status,
-    required this.createdAt,
+    required this.friendshipId,
+    required this.nickname,
+    this.tag = '',
+    this.profileImageUrl,
   });
+
+  String get displayName => '$nickname#$tag';
 
   factory FriendRequest.fromJson(Map<String, dynamic> json) {
     return FriendRequest(
       id: json['id'] as int? ?? 0,
-      fromUserId: json['fromUserId'] as int? ?? json['userId'] as int? ?? 0,
-      fromNickname: json['fromNickname'] as String? ??
-          json['nickname'] as String? ??
-          '',
-      fromProfileImageUrl: json['fromProfileImageUrl'] as String? ??
-          json['profileImageUrl'] as String?,
-      status: json['status'] as String? ?? 'PENDING',
-      createdAt: json['createdAt'] != null
-          ? DateTime.parse(json['createdAt'] as String)
-          : DateTime.now(),
+      friendshipId: json['friendshipId'] as int? ?? 0,
+      nickname: json['nickname'] as String? ?? '',
+      tag: json['tag'] as String? ?? '',
+      profileImageUrl: json['profileImageUrl'] as String?,
     );
   }
 }

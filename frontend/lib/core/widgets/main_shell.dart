@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../theme/app_theme.dart';
-import '../../features/auth/providers/auth_provider.dart';
+import '../../features/friends/providers/friends_provider.dart';
 
 class MainShell extends ConsumerWidget {
   final Widget child;
@@ -12,12 +12,16 @@ class MainShell extends ConsumerWidget {
   int _currentIndex(BuildContext context) {
     final location = GoRouterState.of(context).matchedLocation;
     if (location.startsWith('/chats')) return 1;
+    if (location.startsWith('/requests')) return 2;
+    if (location.startsWith('/settings')) return 3;
     return 0;
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentIndex = _currentIndex(context);
+    final requestsState = ref.watch(friendRequestsProvider);
+    final pendingCount = requestsState.requests.length;
 
     return Scaffold(
       body: child,
@@ -53,36 +57,19 @@ class MainShell extends ConsumerWidget {
                   onTap: () => context.go('/chats'),
                 ),
                 _NavItem(
-                  icon: Icons.logout_rounded,
-                  activeIcon: Icons.logout_rounded,
-                  label: '로그아웃',
-                  isActive: false,
-                  onTap: () async {
-                    final confirmed = await showDialog<bool>(
-                      context: context,
-                      builder: (ctx) => AlertDialog(
-                        title: const Text('로그아웃'),
-                        content: const Text(
-                            '로그아웃 하시겠습니까?'),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.of(ctx).pop(false),
-                            child: const Text('취소'),
-                          ),
-                          TextButton(
-                            onPressed: () => Navigator.of(ctx).pop(true),
-                            style: TextButton.styleFrom(
-                              foregroundColor: AppTheme.errorRed,
-                            ),
-                            child: const Text('로그아웃'),
-                          ),
-                        ],
-                      ),
-                    );
-                    if (confirmed == true) {
-                      ref.read(authProvider.notifier).logout();
-                    }
-                  },
+                  icon: Icons.person_add_outlined,
+                  activeIcon: Icons.person_add,
+                  label: '친구 신청',
+                  isActive: currentIndex == 2,
+                  badgeCount: pendingCount,
+                  onTap: () => context.go('/requests'),
+                ),
+                _NavItem(
+                  icon: Icons.settings_outlined,
+                  activeIcon: Icons.settings,
+                  label: '설정',
+                  isActive: currentIndex == 3,
+                  onTap: () => context.go('/settings'),
                 ),
               ],
             ),
@@ -99,6 +86,7 @@ class _NavItem extends StatelessWidget {
   final String label;
   final bool isActive;
   final VoidCallback onTap;
+  final int badgeCount;
 
   const _NavItem({
     required this.icon,
@@ -106,6 +94,7 @@ class _NavItem extends StatelessWidget {
     required this.label,
     required this.isActive,
     required this.onTap,
+    this.badgeCount = 0,
   });
 
   @override
@@ -120,10 +109,41 @@ class _NavItem extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              isActive ? activeIcon : icon,
-              color: color,
-              size: 26,
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Icon(
+                  isActive ? activeIcon : icon,
+                  color: color,
+                  size: 26,
+                ),
+                if (badgeCount > 0)
+                  Positioned(
+                    right: -8,
+                    top: -4,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 5, vertical: 1),
+                      decoration: BoxDecoration(
+                        color: AppTheme.unreadBadge,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      constraints: const BoxConstraints(
+                        minWidth: 16,
+                        minHeight: 16,
+                      ),
+                      child: Text(
+                        badgeCount > 99 ? '99+' : '$badgeCount',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+              ],
             ),
             const SizedBox(height: 2),
             Text(
@@ -133,6 +153,7 @@ class _NavItem extends StatelessWidget {
                 color: color,
                 fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
               ),
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),

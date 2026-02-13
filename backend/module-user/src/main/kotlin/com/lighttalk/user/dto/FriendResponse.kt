@@ -5,5 +5,6 @@ data class FriendResponse(
     val nickname: String,
     val tag: String,
     val profileImageUrl: String?,
-    val isOnline: Boolean
+    val isOnline: Boolean,
+    val friendshipId: Long? = null
 )

@@ -174,6 +174,7 @@ class FriendService(
 
         val requesters = userRepository.findAllById(requesterIds)
         val onlineUserIds = onlineStatusService.getOnlineUserIds(requesterIds)
+        val friendshipByUserId = pendingFriendships.associateBy { it.userId }
 
         return requesters.map { requester ->
             FriendResponse(
@@ -181,7 +182,8 @@ class FriendService(
                 nickname = requester.nickname,
                 tag = requester.tag,
                 profileImageUrl = requester.profileImageUrl,
-                isOnline = onlineUserIds.contains(requester.id)
+                isOnline = onlineUserIds.contains(requester.id),
+                friendshipId = friendshipByUserId[requester.id]?.id
             )
         }
     }

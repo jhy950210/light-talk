@@ -170,6 +170,98 @@ class UserSearchNotifier extends StateNotifier<UserSearchState> {
   }
 }
 
+// ── Friend Requests State ────────────────────────────────────
+class FriendRequestsState {
+  final List<FriendRequest> requests;
+  final bool isLoading;
+  final String? errorMessage;
+
+  const FriendRequestsState({
+    this.requests = const [],
+    this.isLoading = false,
+    this.errorMessage,
+  });
+
+  FriendRequestsState copyWith({
+    List<FriendRequest>? requests,
+    bool? isLoading,
+    String? errorMessage,
+  }) {
+    return FriendRequestsState(
+      requests: requests ?? this.requests,
+      isLoading: isLoading ?? this.isLoading,
+      errorMessage: errorMessage,
+    );
+  }
+}
+
+// ── Friend Requests Notifier ─────────────────────────────────
+class FriendRequestsNotifier extends StateNotifier<FriendRequestsState> {
+  final FriendRepository _repository;
+
+  FriendRequestsNotifier(this._repository)
+      : super(const FriendRequestsState());
+
+  Future<void> loadRequests() async {
+    state = state.copyWith(isLoading: true, errorMessage: null);
+    try {
+      final requests = await _repository.getFriendRequests();
+      state = state.copyWith(requests: requests, isLoading: false);
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: _parseError(e),
+      );
+    }
+  }
+
+  Future<bool> acceptRequest(int friendshipId) async {
+    try {
+      await _repository.acceptFriendRequest(friendshipId);
+      state = state.copyWith(
+        requests:
+            state.requests.where((r) => r.friendshipId != friendshipId).toList(),
+      );
+      return true;
+    } catch (e) {
+      state = state.copyWith(errorMessage: _parseError(e));
+      return false;
+    }
+  }
+
+  Future<bool> rejectRequest(int friendshipId) async {
+    try {
+      await _repository.rejectFriendRequest(friendshipId);
+      state = state.copyWith(
+        requests:
+            state.requests.where((r) => r.friendshipId != friendshipId).toList(),
+      );
+      return true;
+    } catch (e) {
+      state = state.copyWith(errorMessage: _parseError(e));
+      return false;
+    }
+  }
+
+  String _parseError(dynamic e) {
+    if (e is DioException) {
+      final data = e.response?.data;
+      if (data is Map<String, dynamic>) {
+        final error = data['error'];
+        if (error is Map<String, dynamic> && error['message'] != null) {
+          return error['message'] as String;
+        }
+      }
+      return 'Server error. Please try again.';
+    }
+    return 'An unexpected error occurred.';
+  }
+
+  void clearError() {
+    state = state.copyWith(errorMessage: null);
+  }
+}
+
 // ── Providers ────────────────────────────────────────────────
 final friendRepositoryProvider = Provider<FriendRepository>((ref) {
   return FriendRepository(ref.watch(dioClientProvider));
@@ -178,6 +270,11 @@ final friendRepositoryProvider = Provider<FriendRepository>((ref) {
 final friendsProvider =
     StateNotifierProvider<FriendsNotifier, FriendsState>((ref) {
   return FriendsNotifier(ref.watch(friendRepositoryProvider));
+});
+
+final friendRequestsProvider =
+    StateNotifierProvider<FriendRequestsNotifier, FriendRequestsState>((ref) {
+  return FriendRequestsNotifier(ref.watch(friendRepositoryProvider));
 });
 
 final userSearchProvider =
