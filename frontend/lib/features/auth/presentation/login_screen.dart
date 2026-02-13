@@ -156,6 +156,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       if (value.length < 6) {
                         return '비밀번호는 6자 이상이어야 합니다.';
                       }
+                      if (!RegExp(r'[a-z]').hasMatch(value)) {
+                        return '비밀번호에 소문자를 포함해야 합니다.';
+                      }
                       return null;
                     },
                   ),
