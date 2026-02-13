@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import '../../../core/constants/api_constants.dart';
+import '../../../core/providers/providers.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/avatar_widget.dart';
 import '../data/models/chat_room_model.dart';
@@ -105,16 +107,27 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
   }
 }
 
-class _ChatRoomTile extends StatelessWidget {
+class _ChatRoomTile extends ConsumerWidget {
   final ChatRoomModel room;
 
   const _ChatRoomTile({required this.room});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentUserId =
+        ref.read(sharedPreferencesProvider).getInt(ApiConstants.userIdKey) ?? 0;
     final hasUnread = room.unreadCount > 0;
     final lastMsg = room.lastMessage;
     final timeStr = lastMsg != null ? _formatTime(lastMsg.createdAt) : '';
+
+    // For DIRECT chats, find the other member to show their name/avatar
+    final otherMember = room.members.cast<ChatMember?>().firstWhere(
+          (m) => m!.userId != currentUserId,
+          orElse: () => room.members.isNotEmpty ? room.members.first : null,
+        );
+    final displayName =
+        room.name.isNotEmpty ? room.name : (otherMember?.nickname ?? '채팅');
+    final displayImage = room.imageUrl ?? otherMember?.profileImageUrl;
 
     return InkWell(
       onTap: () => context.push('/chats/${room.id}'),
@@ -124,12 +137,11 @@ class _ChatRoomTile extends StatelessWidget {
           children: [
             // ── Avatar ───────────────────────────────
             AvatarWidget(
-              name: room.name,
-              imageUrl: room.imageUrl,
+              name: displayName,
+              imageUrl: displayImage,
               radius: 26,
-              showOnlineIndicator: room.members.isNotEmpty,
-              isOnline:
-                  room.members.any((m) => m.isOnline),
+              showOnlineIndicator: otherMember != null,
+              isOnline: otherMember?.isOnline ?? false,
             ),
             const SizedBox(width: 14),
 
@@ -143,7 +155,7 @@ class _ChatRoomTile extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          room.name,
+                          displayName,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(

@@ -8,7 +8,11 @@ class ApiConstants {
   );
   static const String wsUrl = String.fromEnvironment(
     'WS_URL',
-    defaultValue: 'ws://localhost:8080/ws',
+    defaultValue: 'ws://localhost:8080/ws/raw',
+  );
+  static const String wsUrlSockJS = String.fromEnvironment(
+    'WS_URL_SOCKJS',
+    defaultValue: 'http://localhost:8080/ws',
   );
 
   // ── Auth ───────────────────────────────────────────────────
@@ -50,7 +54,7 @@ class ApiConstants {
   // ── STOMP Destinations ─────────────────────────────────────
   static String topicChat(int roomId) => '/topic/chat/$roomId';
   static String queueUser(int userId) => '/queue/user/$userId';
-  static const String appChatSend = '/app/chat/send';
+  static String appChatSend(int roomId) => '/app/chat/$roomId/send';
 
   // ── Storage Keys ───────────────────────────────────────────
   static const String accessTokenKey = 'access_token';

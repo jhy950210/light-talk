@@ -1,13 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../providers/providers.dart';
 import '../theme/app_theme.dart';
 import '../../features/friends/providers/friends_provider.dart';
 
-class MainShell extends ConsumerWidget {
+class MainShell extends ConsumerStatefulWidget {
   final Widget child;
 
   const MainShell({super.key, required this.child});
+
+  @override
+  ConsumerState<MainShell> createState() => _MainShellState();
+}
+
+class _MainShellState extends ConsumerState<MainShell> {
+  bool _stompConnected = false;
+
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() {
+      final stomp = ref.read(stompServiceProvider);
+      if (!stomp.isConnected && !_stompConnected) {
+        _stompConnected = true;
+        stomp.connect(
+          onConnect: () {
+            print('[MainShell] STOMP connected');
+          },
+        );
+      }
+    });
+  }
 
   int _currentIndex(BuildContext context) {
     final location = GoRouterState.of(context).matchedLocation;
@@ -18,13 +42,13 @@ class MainShell extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final currentIndex = _currentIndex(context);
     final requestsState = ref.watch(friendRequestsProvider);
     final pendingCount = requestsState.requests.length;
 
     return Scaffold(
-      body: child,
+      body: widget.child,
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: Colors.white,

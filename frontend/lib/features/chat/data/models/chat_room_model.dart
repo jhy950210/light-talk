@@ -20,19 +20,26 @@ class ChatRoomModel {
   });
 
   factory ChatRoomModel.fromJson(Map<String, dynamic> json) {
+    final members = (json['members'] as List<dynamic>?)
+            ?.map((e) => ChatMember.fromJson(e as Map<String, dynamic>))
+            .toList() ??
+        [];
+
+    // Use server-provided name only; for DIRECT chats the UI layer
+    // derives displayName from the other member using currentUserId.
+    final name = json['name'] as String? ?? '';
+    final imageUrl = json['imageUrl'] as String?;
+
     return ChatRoomModel(
       id: json['id'] as int? ?? 0,
       type: json['type'] as String? ?? 'DIRECT',
-      name: json['name'] as String? ?? '',
-      imageUrl: json['imageUrl'] as String?,
+      name: name,
+      imageUrl: imageUrl,
       lastMessage: json['lastMessage'] != null
           ? LastMessage.fromJson(json['lastMessage'] as Map<String, dynamic>)
           : null,
       unreadCount: json['unreadCount'] as int? ?? 0,
-      members: (json['members'] as List<dynamic>?)
-              ?.map((e) => ChatMember.fromJson(e as Map<String, dynamic>))
-              .toList() ??
-          [],
+      members: members,
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'] as String)
           : DateTime.now(),

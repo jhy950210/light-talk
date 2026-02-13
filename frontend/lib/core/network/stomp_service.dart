@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:stomp_dart_client/stomp.dart';
 import 'package:stomp_dart_client/stomp_config.dart';
 import 'package:stomp_dart_client/stomp_frame.dart';
@@ -28,39 +29,52 @@ class StompService {
   }) {
     final token = _prefs.getString(ApiConstants.accessTokenKey) ?? '';
 
-    _client = StompClient(
-      config: StompConfig(
-        url: ApiConstants.wsUrl,
-        stompConnectHeaders: {
-          'Authorization': 'Bearer $token',
-        },
-        webSocketConnectHeaders: {
-          'Authorization': 'Bearer $token',
-        },
-        onConnect: (StompFrame frame) {
-          _isConnected = true;
-          _connectionController.add(true);
-          onConnect?.call();
-          print('[STOMP] Connected');
-        },
-        onDisconnect: (StompFrame frame) {
-          _isConnected = false;
-          _connectionController.add(false);
-          onDisconnect?.call();
-          print('[STOMP] Disconnected');
-        },
-        onWebSocketError: (dynamic error) {
-          print('[STOMP] WebSocket Error: $error');
-          _isConnected = false;
-          _connectionController.add(false);
-        },
-        onStompError: (StompFrame frame) {
-          print('[STOMP] Error: ${frame.body}');
-          onError?.call(frame);
-        },
-        reconnectDelay: const Duration(seconds: 5),
-      ),
-    );
+    final onConnectCb = (StompFrame frame) {
+      _isConnected = true;
+      _connectionController.add(true);
+      onConnect?.call();
+      print('[STOMP] Connected');
+    };
+    final onDisconnectCb = (StompFrame frame) {
+      _isConnected = false;
+      _connectionController.add(false);
+      onDisconnect?.call();
+      print('[STOMP] Disconnected');
+    };
+    final onWebSocketErrorCb = (dynamic error) {
+      print('[STOMP] WebSocket Error: $error');
+      _isConnected = false;
+      _connectionController.add(false);
+    };
+    final onStompErrorCb = (StompFrame frame) {
+      print('[STOMP] Error: ${frame.body}');
+      onError?.call(frame);
+    };
+
+    // Web uses SockJS endpoint (/ws), mobile uses raw WebSocket (/ws/raw)
+    final config = kIsWeb
+        ? StompConfig.sockJS(
+            url: ApiConstants.wsUrlSockJS,
+            stompConnectHeaders: {'Authorization': 'Bearer $token'},
+            webSocketConnectHeaders: {'Authorization': 'Bearer $token'},
+            onConnect: onConnectCb,
+            onDisconnect: onDisconnectCb,
+            onWebSocketError: onWebSocketErrorCb,
+            onStompError: onStompErrorCb,
+            reconnectDelay: const Duration(seconds: 5),
+          )
+        : StompConfig(
+            url: ApiConstants.wsUrl,
+            stompConnectHeaders: {'Authorization': 'Bearer $token'},
+            webSocketConnectHeaders: {'Authorization': 'Bearer $token'},
+            onConnect: onConnectCb,
+            onDisconnect: onDisconnectCb,
+            onWebSocketError: onWebSocketErrorCb,
+            onStompError: onStompErrorCb,
+            reconnectDelay: const Duration(seconds: 5),
+          );
+
+    _client = StompClient(config: config);
 
     _client!.activate();
   }

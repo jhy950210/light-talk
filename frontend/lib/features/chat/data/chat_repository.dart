@@ -84,8 +84,8 @@ class ChatRepository {
     }
 
     // Handle both flat list and paged response
-    if (pageData.containsKey('content')) {
-      final messages = (pageData['content'] as List<dynamic>)
+    if (pageData.containsKey('messages')) {
+      final messages = (pageData['messages'] as List<dynamic>)
           .map((e) => MessageModel.fromJson(e as Map<String, dynamic>))
           .toList();
       return MessagePage(

@@ -121,8 +121,7 @@ class _FriendRequestsScreenState extends ConsumerState<FriendRequestsScreen> {
             style: OutlinedButton.styleFrom(
               foregroundColor: const Color(0xFF8E8E93),
               side: const BorderSide(color: Color(0xFFE5E5EA)),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              minimumSize: Size.zero,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -133,8 +132,7 @@ class _FriendRequestsScreenState extends ConsumerState<FriendRequestsScreen> {
           ElevatedButton(
             onPressed: () => _acceptRequest(request),
             style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              minimumSize: Size.zero,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),

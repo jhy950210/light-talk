@@ -301,14 +301,15 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_rounded),
-          onPressed: () {
+          onPressed: () async {
             ref
                 .read(messagesProvider(widget.roomId).notifier)
                 .unsubscribeFromRoom();
-            ref
+            await ref
                 .read(messagesProvider(widget.roomId).notifier)
                 .markAsRead();
-            context.pop();
+            ref.read(chatRoomsProvider.notifier).loadRooms();
+            if (context.mounted) context.pop();
           },
         ),
         title: Column(

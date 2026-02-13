@@ -259,8 +259,21 @@ class MessagesNotifier extends StateNotifier<MessagesState> {
         return;
       }
 
+      if (eventType == 'NEW_MESSAGE') {
+        final messageData = data['message'] as Map<String, dynamic>;
+        final message = MessageModel.fromJson(messageData);
+        // Add to the beginning (newest first)
+        final existing = state.messages.any((m) => m.id == message.id);
+        if (!existing) {
+          state = state.copyWith(
+            messages: [message, ...state.messages],
+          );
+        }
+        return;
+      }
+
+      // Fallback: try to parse directly as a message
       final message = MessageModel.fromJson(data);
-      // Add to the beginning (newest first)
       final existing = state.messages.any((m) => m.id == message.id);
       if (!existing) {
         state = state.copyWith(
@@ -293,13 +306,10 @@ class MessagesNotifier extends StateNotifier<MessagesState> {
 
   void sendMessage(String content, int senderId, String senderNickname, {String type = 'TEXT'}) {
     final payload = jsonEncode({
-      'chatRoomId': roomId,
-      'senderId': senderId,
-      'senderNickname': senderNickname,
       'content': content,
       'type': type,
     });
-    _stompService.send(ApiConstants.appChatSend, payload);
+    _stompService.send(ApiConstants.appChatSend(roomId), payload);
   }
 
   Future<void> sendMediaMessage({

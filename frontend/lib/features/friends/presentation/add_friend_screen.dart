@@ -18,6 +18,14 @@ class _AddFriendScreenState extends ConsumerState<AddFriendScreen> {
   Timer? _debounce;
 
   @override
+  void initState() {
+    super.initState();
+    Future.microtask(() {
+      ref.read(userSearchProvider.notifier).clear();
+    });
+  }
+
+  @override
   void dispose() {
     _searchController.dispose();
     _debounce?.cancel();
