@@ -106,9 +106,9 @@ class _PhoneInputScreenState extends ConsumerState<PhoneInputScreen> {
                     keyboardType: TextInputType.phone,
                     textInputAction: TextInputAction.done,
                     onFieldSubmitted: (_) => _handleSendOtp(),
-                    maxLength: 13,
+                    maxLength: 11,
                     onChanged: (value) {
-                      final filtered = value.replaceAll(RegExp(r'[^\d-]'), '');
+                      final filtered = value.replaceAll(RegExp(r'[^\d]'), '');
                       if (filtered != value) {
                         _phoneController.value = TextEditingValue(
                           text: filtered,
@@ -117,7 +117,7 @@ class _PhoneInputScreenState extends ConsumerState<PhoneInputScreen> {
                       }
                     },
                     decoration: const InputDecoration(
-                      hintText: '010-1234-5678',
+                      hintText: '01012345678',
                       prefixIcon: Icon(Icons.phone_outlined),
                       counterText: '',
                     ),

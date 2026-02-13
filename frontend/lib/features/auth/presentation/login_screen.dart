@@ -97,9 +97,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     controller: _phoneController,
                     keyboardType: TextInputType.phone,
                     textInputAction: TextInputAction.next,
-                    maxLength: 13,
+                    maxLength: 11,
                     onChanged: (value) {
-                      final filtered = value.replaceAll(RegExp(r'[^\d-]'), '');
+                      final filtered = value.replaceAll(RegExp(r'[^\d]'), '');
                       if (filtered != value) {
                         _phoneController.value = TextEditingValue(
                           text: filtered,
@@ -108,7 +108,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       }
                     },
                     decoration: const InputDecoration(
-                      hintText: '전화번호',
+                      hintText: '01012345678',
                       prefixIcon: Icon(Icons.phone_outlined),
                       counterText: '',
                     ),

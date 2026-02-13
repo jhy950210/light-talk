@@ -19,6 +19,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
   final _focusNode = FocusNode();
   Timer? _timer;
   int _remainingSeconds = 0;
+  bool _isVerifying = false;
 
   @override
   void initState() {
@@ -63,7 +64,8 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
 
   void _handleVerify() {
     final code = _otpController.text.trim();
-    if (code.length != 6) return;
+    if (code.length != 6 || _isVerifying) return;
+    setState(() => _isVerifying = true);
     ref.read(authProvider.notifier).verifyOtp(code);
   }
 
@@ -87,7 +89,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
       }
       // OTP verified – navigate based on isNewUser
       if (next.verificationToken != null &&
-          previous?.verificationToken == null) {
+          previous?.verificationToken != next.verificationToken) {
         if (next.isNewUser) {
           context.go('/register');
         } else {
@@ -95,6 +97,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
         }
       }
       if (next.errorMessage != null) {
+        _isVerifying = false;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(next.errorMessage!),

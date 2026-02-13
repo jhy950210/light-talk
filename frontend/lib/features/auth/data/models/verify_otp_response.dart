@@ -11,7 +11,7 @@ class VerifyOtpResponse {
     final data = json['data'] as Map<String, dynamic>? ?? json;
     return VerifyOtpResponse(
       verificationToken: data['verificationToken'] as String,
-      isNewUser: data['isNewUser'] as bool,
+      isNewUser: (data['isNewUser'] ?? data['newUser'] ?? false) as bool,
     );
   }
 }
