@@ -1,0 +1,60 @@
+default_platform(:ios)
+
+platform :ios do
+  before_all do
+    @api_key = app_store_connect_api_key(
+      key_id: "288575LLF3",
+      issuer_id: "645821a0-a3a4-4d60-9911-b815b8b6a1c5",
+      key_filepath: "/Users/jungwheeyoung/keys/AuthKey_288575LLF3_lighttalk.p8",
+    )
+  end
+
+  desc "Create certificates, profiles, build and upload to TestFlight"
+  lane :release do
+    cert(development: false, force: false)
+
+    sigh(
+      app_identifier: "com.lighttalk.lightTalk",
+      adhoc: false,
+      force: false,
+    )
+
+    profile_name = lane_context[SharedValues::SIGH_NAME]
+
+    build_app(
+      workspace: "Runner.xcworkspace",
+      scheme: "Runner",
+      export_method: "app-store",
+      output_directory: "../build/ios/ipa",
+      output_name: "LightTalk.ipa",
+      export_options: {
+        signingStyle: "manual",
+        provisioningProfiles: {
+          "com.lighttalk.lightTalk" => profile_name
+        }
+      },
+    )
+
+    upload_to_testflight(
+      skip_waiting_for_build_processing: true,
+    )
+  end
+
+  desc "Upload existing IPA to TestFlight"
+  lane :beta do
+    upload_to_testflight(
+      ipa: "../build/ios/ipa/라이트톡.ipa",
+      skip_waiting_for_build_processing: true,
+    )
+  end
+
+  desc "Upload metadata to App Store Connect"
+  lane :metadata do
+    deliver(
+      skip_binary_upload: true,
+      skip_screenshots: true,
+      force: true,
+      precheck_include_in_app_purchases: false,
+    )
+  end
+end

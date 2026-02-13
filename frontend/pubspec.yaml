@@ -1,7 +1,7 @@
 name: light_talk
 description: A lightweight real-time chat application.
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.0.0+3
 
 environment:
   sdk: '>=3.2.0 <4.0.0'
@@ -47,6 +47,7 @@ dev_dependencies:
   json_serializable: ^6.7.1
   freezed: ^2.4.6
   riverpod_generator: ^2.3.9
+  flutter_launcher_icons: ^0.14.3
 
 flutter:
   uses-material-design: true

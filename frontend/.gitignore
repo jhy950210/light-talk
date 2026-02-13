@@ -43,3 +43,18 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Android signing
+/android/key.properties
+/android/app/*.jks
+/android/app/*.keystore
+
+# Fastlane secrets & build artifacts
+/ios/fastlane/api_key.json
+/ios/fastlane/report.xml
+
+# iOS signing certificates & provisioning profiles
+/ios/*.p12
+/ios/*.cer
+/ios/*.certSigningRequest
+/ios/*.mobileprovision
