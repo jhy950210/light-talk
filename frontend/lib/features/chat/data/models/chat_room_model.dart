@@ -19,6 +19,10 @@ class ChatRoomModel {
     required this.createdAt,
   });
 
+  bool get isGroup => type == 'GROUP';
+  bool get isDirect => type == 'DIRECT';
+  int get memberCount => members.length;
+
   factory ChatRoomModel.fromJson(Map<String, dynamic> json) {
     final members = (json['members'] as List<dynamic>?)
             ?.map((e) => ChatMember.fromJson(e as Map<String, dynamic>))
@@ -103,22 +107,35 @@ class LastMessage {
 class ChatMember {
   final int userId;
   final String nickname;
+  final String? tag;
   final String? profileImageUrl;
   final bool isOnline;
+  final String role; // OWNER, ADMIN, MEMBER
 
   const ChatMember({
     required this.userId,
     required this.nickname,
+    this.tag,
     this.profileImageUrl,
     this.isOnline = false,
+    this.role = 'MEMBER',
   });
+
+  bool get isOwner => role == 'OWNER';
+  bool get isAdmin => role == 'ADMIN' || role == 'OWNER';
+
+  String get displayName => tag != null && tag!.isNotEmpty
+      ? '$nickname#$tag'
+      : nickname;
 
   factory ChatMember.fromJson(Map<String, dynamic> json) {
     return ChatMember(
       userId: json['userId'] as int? ?? 0,
       nickname: json['nickname'] as String? ?? '',
+      tag: json['tag'] as String?,
       profileImageUrl: json['profileImageUrl'] as String?,
       isOnline: json['isOnline'] as bool? ?? false,
+      role: json['role'] as String? ?? 'MEMBER',
     );
   }
 }

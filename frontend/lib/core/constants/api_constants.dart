@@ -45,6 +45,12 @@ class ApiConstants {
   static String deleteMessage(int roomId, int messageId) =>
       '/api/v1/chats/$roomId/messages/$messageId';
 
+  // ── Chat Members (Group) ───────────────────────────────────────
+  static String chatMembers(int roomId) => '/api/v1/chats/$roomId/members';
+  static String chatMember(int roomId, int userId) =>
+      '/api/v1/chats/$roomId/members/$userId';
+  static String chatLeave(int roomId) => '/api/v1/chats/$roomId/leave';
+
   // ── Upload ────────────────────────────────────────────────────
   static const String presignUpload = '/api/v1/upload/presign';
 
