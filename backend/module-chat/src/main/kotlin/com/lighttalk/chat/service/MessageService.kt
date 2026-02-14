@@ -34,8 +34,8 @@ class MessageService(
             throw ApiException(ErrorCode.CHAT_ROOM_NOT_FOUND)
         }
 
-        // Validate sender is a member
-        chatMemberRepository.findByChatRoomIdAndUserId(chatRoomId, senderId)
+        // Validate sender is an active member
+        chatMemberRepository.findActiveByChatRoomIdAndUserId(chatRoomId, senderId)
             ?: throw ApiException(ErrorCode.NOT_CHAT_MEMBER)
 
         val message = Message(
@@ -57,8 +57,8 @@ class MessageService(
             throw ApiException(ErrorCode.CHAT_ROOM_NOT_FOUND)
         }
 
-        // Validate user is a member
-        chatMemberRepository.findByChatRoomIdAndUserId(chatRoomId, userId)
+        // Validate user is an active member
+        chatMemberRepository.findActiveByChatRoomIdAndUserId(chatRoomId, userId)
             ?: throw ApiException(ErrorCode.NOT_CHAT_MEMBER)
 
         val pageable = PageRequest.of(0, size + 1)
@@ -87,7 +87,7 @@ class MessageService(
             throw ApiException(ErrorCode.CHAT_ROOM_NOT_FOUND)
         }
 
-        val membership = chatMemberRepository.findByChatRoomIdAndUserId(chatRoomId, userId)
+        val membership = chatMemberRepository.findActiveByChatRoomIdAndUserId(chatRoomId, userId)
             ?: throw ApiException(ErrorCode.NOT_CHAT_MEMBER)
 
         // Only update if new messageId is greater than current lastReadMessageId
@@ -106,8 +106,8 @@ class MessageService(
             throw ApiException(ErrorCode.CHAT_ROOM_NOT_FOUND)
         }
 
-        // Validate user is a member
-        chatMemberRepository.findByChatRoomIdAndUserId(chatRoomId, userId)
+        // Validate user is an active member
+        chatMemberRepository.findActiveByChatRoomIdAndUserId(chatRoomId, userId)
             ?: throw ApiException(ErrorCode.NOT_CHAT_MEMBER)
 
         val message = messageRepository.findById(messageId)

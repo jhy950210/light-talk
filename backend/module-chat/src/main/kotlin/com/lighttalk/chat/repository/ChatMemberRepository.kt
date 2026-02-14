@@ -27,4 +27,39 @@ interface ChatMemberRepository : JpaRepository<ChatMember, Long> {
         @Param("userId1") userId1: Long,
         @Param("userId2") userId2: Long
     ): Long?
+
+    @Query("""
+        SELECT cm FROM ChatMember cm
+        WHERE cm.chatRoomId = :chatRoomId AND cm.leftAt IS NULL
+    """)
+    fun findActiveByChatRoomId(@Param("chatRoomId") chatRoomId: Long): List<ChatMember>
+
+    @Query("""
+        SELECT cm FROM ChatMember cm
+        WHERE cm.chatRoomId = :chatRoomId AND cm.userId = :userId AND cm.leftAt IS NULL
+    """)
+    fun findActiveByChatRoomIdAndUserId(
+        @Param("chatRoomId") chatRoomId: Long,
+        @Param("userId") userId: Long
+    ): ChatMember?
+
+    @Query("""
+        SELECT COUNT(cm) FROM ChatMember cm
+        WHERE cm.chatRoomId = :chatRoomId AND cm.leftAt IS NULL
+    """)
+    fun countActiveByChatRoomId(@Param("chatRoomId") chatRoomId: Long): Long
+
+    @Query("""
+        SELECT cm FROM ChatMember cm
+        WHERE cm.chatRoomId = :chatRoomId AND cm.leftAt IS NULL AND cm.userId <> :excludeUserId
+        ORDER BY
+            CASE cm.role WHEN com.lighttalk.core.entity.ChatMemberRole.ADMIN THEN 0
+                         WHEN com.lighttalk.core.entity.ChatMemberRole.MEMBER THEN 1
+                         ELSE 2 END,
+            cm.joinedAt ASC
+    """)
+    fun findNextOwnerCandidate(
+        @Param("chatRoomId") chatRoomId: Long,
+        @Param("excludeUserId") excludeUserId: Long
+    ): List<ChatMember>
 }

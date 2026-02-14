@@ -57,6 +57,17 @@ enum class ErrorCode(
     MESSAGE_DELETE_EXPIRED(HttpStatus.BAD_REQUEST, "M004", "메시지 삭제 가능 시간(5분)이 지났습니다"),
     MESSAGE_ALREADY_DELETED(HttpStatus.BAD_REQUEST, "M005", "이미 삭제된 메시지입니다"),
 
+    // Group Chat
+    GROUP_CHAT_NAME_REQUIRED(HttpStatus.BAD_REQUEST, "GC001", "그룹 채팅방 이름은 필수입니다"),
+    GROUP_CHAT_MIN_MEMBERS(HttpStatus.BAD_REQUEST, "GC002", "그룹 채팅방은 최소 2명의 멤버가 필요합니다"),
+    GROUP_CHAT_MAX_MEMBERS(HttpStatus.BAD_REQUEST, "GC003", "그룹 채팅방 최대 인원을 초과했습니다"),
+    NOT_CHAT_OWNER(HttpStatus.FORBIDDEN, "GC004", "방장 권한이 필요합니다"),
+    NOT_CHAT_ADMIN(HttpStatus.FORBIDDEN, "GC005", "관리자 이상의 권한이 필요합니다"),
+    CANNOT_LEAVE_DIRECT_CHAT(HttpStatus.BAD_REQUEST, "GC006", "1:1 채팅방에서는 나갈 수 없습니다"),
+    CANNOT_MODIFY_DIRECT_CHAT(HttpStatus.BAD_REQUEST, "GC007", "1:1 채팅방은 수정할 수 없습니다"),
+    INVALID_ROLE(HttpStatus.BAD_REQUEST, "GC008", "유효하지 않은 역할입니다"),
+    CANNOT_CHANGE_OWN_ROLE(HttpStatus.BAD_REQUEST, "GC009", "자신의 역할은 변경할 수 없습니다"),
+
     // Upload
     INVALID_FILE_TYPE(HttpStatus.BAD_REQUEST, "UP001", "허용되지 않은 파일 형식입니다"),
     FILE_TOO_LARGE(HttpStatus.BAD_REQUEST, "UP002", "파일 크기가 제한을 초과했습니다");

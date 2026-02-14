@@ -54,8 +54,8 @@ light-talk/
 - **users**: id, phone_blind_index, password_hash, nickname, tag(VARCHAR 4), profile_image_url, created_at, updated_at — UNIQUE(nickname, tag)
 - **otp_verifications**: id, phone_blind_index, otp_code, attempts, expires_at, verified, created_at
 - **friendships**: id, user_id, friend_id, status(PENDING/ACCEPTED/BLOCKED), created_at
-- **chat_rooms**: id, type(DIRECT), created_at
-- **chat_members**: id, chat_room_id, user_id, joined_at, last_read_message_id
+- **chat_rooms**: id, type(DIRECT/GROUP), name, owner_id, max_members, image_url, created_at
+- **chat_members**: id, chat_room_id, user_id, joined_at, last_read_message_id, role(OWNER/ADMIN/MEMBER), left_at
 - **messages**: id, chat_room_id, sender_id, content, type(TEXT/IMAGE/VIDEO/SYSTEM), created_at, deleted_at
 
 ## 아키텍처 원칙
@@ -70,7 +70,8 @@ light-talk/
 - **Auth (Phone)**: POST `/api/v1/auth/send-otp`, `/api/v1/auth/verify-otp`, `/api/v1/auth/phone/register`, `/api/v1/auth/phone/login`
 - **Users**: GET `/api/v1/users/me`, PUT `/api/v1/users/me`, DELETE `/api/v1/users/me` (회원탈퇴, body: `{password}`), GET `/api/v1/users/search?q=` (닉네임 또는 닉네임#태그)
 - **Friends**: GET `/api/v1/friends`, POST `/api/v1/friends` (body: `{friendId}`), PUT `/api/v1/friends/{id}/accept`, DELETE `/api/v1/friends/{id}`, GET `/api/v1/friends/pending`
-- **Chats**: GET `/api/v1/chats`, POST `/api/v1/chats`, GET `/api/v1/chats/{roomId}`
+- **Chats**: GET `/api/v1/chats`, POST `/api/v1/chats` (1:1, body: `{targetUserId}`), POST `/api/v1/chats/group` (그룹, body: `{name, memberIds, imageUrl?}`), GET `/api/v1/chats/{roomId}`, PUT `/api/v1/chats/{roomId}` (그룹 정보 수정, body: `{name?, imageUrl?}`)
+- **Chat Members**: POST `/api/v1/chats/{roomId}/members` (초대, body: `{userIds}`), DELETE `/api/v1/chats/{roomId}/members/{userId}` (강퇴), POST `/api/v1/chats/{roomId}/leave` (퇴장), PUT `/api/v1/chats/{roomId}/members/{userId}/role` (역할 변경, body: `{role}`)
 - **Messages**: GET `/api/v1/chats/{roomId}/messages?cursor=&size=20`, DELETE `/api/v1/chats/{roomId}/messages/{messageId}` (5분 이내 본인 메시지 삭제), PUT `/api/v1/chats/{roomId}/read`
 - **Upload**: POST `/api/v1/upload/presign` (body: `{fileName, contentType, contentLength, purpose, chatRoomId?}`) → `{uploadUrl, publicUrl}`
 - **WebSocket**: STOMP endpoint `/ws`, 구독 `/topic/chat/{roomId}`, `/queue/user/{userId}`
