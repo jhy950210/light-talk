@@ -2,6 +2,8 @@ package com.lighttalk.core.entity
 
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
+import jakarta.persistence.EnumType
+import jakarta.persistence.Enumerated
 import jakarta.persistence.Table
 import java.time.LocalDateTime
 
@@ -19,6 +21,23 @@ class ChatMember(
     val joinedAt: LocalDateTime = LocalDateTime.now(),
 
     @Column(name = "last_read_message_id")
-    var lastReadMessageId: Long? = null
+    var lastReadMessageId: Long? = null,
 
-) : BaseEntity()
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 10)
+    var role: ChatMemberRole = ChatMemberRole.MEMBER,
+
+    @Column(name = "left_at")
+    var leftAt: LocalDateTime? = null
+
+) : BaseEntity() {
+
+    val isActive: Boolean
+        get() = leftAt == null
+}
+
+enum class ChatMemberRole {
+    OWNER,
+    ADMIN,
+    MEMBER
+}

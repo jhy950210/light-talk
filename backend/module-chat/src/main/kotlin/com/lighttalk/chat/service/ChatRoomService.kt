@@ -58,18 +58,24 @@ class ChatRoomService(
         return ChatRoomResponse(
             id = chatRoom.id,
             type = chatRoom.type,
+            name = chatRoom.name,
+            imageUrl = chatRoom.imageUrl,
+            ownerId = chatRoom.ownerId,
+            maxMembers = chatRoom.maxMembers,
             members = listOf(
                 ChatMemberInfo(
                     userId = user.id,
                     nickname = user.nickname,
                     profileImageUrl = user.profileImageUrl,
-                    joinedAt = chatRoom.createdAt
+                    joinedAt = chatRoom.createdAt,
+                    role = com.lighttalk.core.entity.ChatMemberRole.MEMBER
                 ),
                 ChatMemberInfo(
                     userId = targetUser.id,
                     nickname = targetUser.nickname,
                     profileImageUrl = targetUser.profileImageUrl,
-                    joinedAt = chatRoom.createdAt
+                    joinedAt = chatRoom.createdAt,
+                    role = com.lighttalk.core.entity.ChatMemberRole.MEMBER
                 )
             ),
             lastMessage = null,
@@ -79,6 +85,7 @@ class ChatRoomService(
 
     fun getMyChatRooms(userId: Long): List<ChatRoomResponse> {
         val myMemberships = chatMemberRepository.findByUserId(userId)
+            .filter { it.isActive }
         if (myMemberships.isEmpty()) {
             return emptyList()
         }
@@ -103,6 +110,7 @@ class ChatRoomService(
 
     private fun buildChatRoomResponse(chatRoom: ChatRoom, currentMembership: ChatMember): ChatRoomResponse {
         val members = chatMemberRepository.findByChatRoomId(chatRoom.id)
+            .filter { it.isActive }
 
         val memberInfos = members.map { member ->
             val user = entityManager.find(User::class.java, member.userId)
@@ -110,7 +118,8 @@ class ChatRoomService(
                 userId = member.userId,
                 nickname = user?.nickname ?: "Unknown",
                 profileImageUrl = user?.profileImageUrl,
-                joinedAt = member.joinedAt
+                joinedAt = member.joinedAt,
+                role = member.role
             )
         }
 
@@ -128,13 +137,16 @@ class ChatRoomService(
         val unreadCount = if (currentMembership.lastReadMessageId != null) {
             messageRepository.countUnreadMessages(chatRoom.id, currentMembership.lastReadMessageId!!)
         } else {
-            // If never read, count all messages
             messageRepository.countUnreadMessages(chatRoom.id, 0L)
         }
 
         return ChatRoomResponse(
             id = chatRoom.id,
             type = chatRoom.type,
+            name = chatRoom.name,
+            imageUrl = chatRoom.imageUrl,
+            ownerId = chatRoom.ownerId,
+            maxMembers = chatRoom.maxMembers,
             members = memberInfos,
             lastMessage = lastMessageInfo,
             unreadCount = unreadCount

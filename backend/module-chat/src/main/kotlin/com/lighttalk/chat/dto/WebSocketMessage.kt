@@ -1,5 +1,6 @@
 package com.lighttalk.chat.dto
 
+import com.lighttalk.core.entity.ChatMemberRole
 import java.time.LocalDateTime
 
 /**
@@ -28,4 +29,31 @@ data class MessageDeletedEvent(
     val type: String = "MESSAGE_DELETED",
     val chatRoomId: Long,
     val messageId: Long
+)
+
+data class MemberJoinedEvent(
+    val type: String = "MEMBER_JOINED",
+    val chatRoomId: Long,
+    val members: List<ChatMemberInfo>
+)
+
+data class MemberLeftEvent(
+    val type: String = "MEMBER_LEFT",
+    val chatRoomId: Long,
+    val userId: Long,
+    val newOwnerId: Long? = null
+)
+
+data class ChatRoomUpdatedEvent(
+    val type: String = "CHAT_ROOM_UPDATED",
+    val chatRoomId: Long,
+    val name: String?,
+    val imageUrl: String?
+)
+
+data class RoleChangedEvent(
+    val type: String = "ROLE_CHANGED",
+    val chatRoomId: Long,
+    val userId: Long,
+    val newRole: ChatMemberRole
 )
