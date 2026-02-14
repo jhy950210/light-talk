@@ -26,19 +26,6 @@ class _FriendRequestsScreenState extends ConsumerState<FriendRequestsScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(friendRequestsProvider);
 
-    ref.listen<FriendRequestsState>(friendRequestsProvider, (previous, next) {
-      if (next.errorMessage != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(next.errorMessage!),
-            backgroundColor: AppTheme.errorRed,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-        ref.read(friendRequestsProvider.notifier).clearError();
-      }
-    });
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('친구 신청'),

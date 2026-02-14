@@ -147,7 +147,7 @@ class _CreateChatRedirectState extends ConsumerState<_CreateChatRedirect> {
       final notifier = ref.read(chatRoomsProvider.notifier);
       final room = await notifier.createDirectRoom(widget.friendId);
       if (mounted) {
-        context.go('/chats/${room.id}');
+        context.pushReplacement('/chats/${room.id}');
       }
     } catch (e) {
       if (mounted) {

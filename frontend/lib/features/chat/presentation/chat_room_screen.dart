@@ -297,7 +297,20 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
     final roomName =
         room.isNotEmpty ? room.first.name : '채팅';
 
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) return;
+        ref
+            .read(messagesProvider(widget.roomId).notifier)
+            .unsubscribeFromRoom();
+        await ref
+            .read(messagesProvider(widget.roomId).notifier)
+            .markAsRead();
+        ref.read(chatRoomsProvider.notifier).loadRooms();
+        if (context.mounted) context.pop();
+      },
+      child: Scaffold(
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_rounded),
@@ -371,6 +384,7 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
           _buildInputBar(context, msgState),
         ],
       ),
+    ),
     );
   }
 
@@ -553,7 +567,8 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
                 focusNode: _focusNode,
                 maxLines: null,
                 textCapitalization: TextCapitalization.sentences,
-                textInputAction: TextInputAction.newline,
+                textInputAction: TextInputAction.send,
+                onSubmitted: (_) => _sendMessage(),
                 decoration: const InputDecoration(
                   hintText: '메시지를 입력하세요',
                   border: InputBorder.none,
