@@ -55,6 +55,59 @@ class ChatRepository {
     return ChatRoomModel.fromJson(json);
   }
 
+  Future<ChatRoomModel> createGroupChatRoom({
+    required String name,
+    required List<int> memberIds,
+  }) async {
+    final response = await _client.post(
+      ApiConstants.chats,
+      data: {
+        'type': 'GROUP',
+        'name': name,
+        'memberIds': memberIds,
+      },
+    );
+    final data = response.data;
+    final json = data is Map<String, dynamic> && data.containsKey('data')
+        ? data['data'] as Map<String, dynamic>
+        : data as Map<String, dynamic>;
+
+    return ChatRoomModel.fromJson(json);
+  }
+
+  Future<List<ChatMember>> getChatMembers(int roomId) async {
+    final response = await _client.get(ApiConstants.chatMembers(roomId));
+    final data = response.data;
+
+    List<dynamic> list;
+    if (data is Map<String, dynamic> && data.containsKey('data')) {
+      list = data['data'] as List<dynamic>? ?? [];
+    } else if (data is List) {
+      list = data;
+    } else {
+      list = [];
+    }
+
+    return list
+        .map((e) => ChatMember.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<void> inviteMembers(int roomId, List<int> userIds) async {
+    await _client.post(
+      ApiConstants.chatMembers(roomId),
+      data: {'userIds': userIds},
+    );
+  }
+
+  Future<void> kickMember(int roomId, int userId) async {
+    await _client.delete(ApiConstants.chatMember(roomId, userId));
+  }
+
+  Future<void> leaveRoom(int roomId) async {
+    await _client.post(ApiConstants.chatLeave(roomId));
+  }
+
   /// Fetch messages with cursor-based pagination.
   /// [cursor] = fetch messages older than this ID.
   /// [size] = number of messages to fetch.
