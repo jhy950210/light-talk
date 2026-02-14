@@ -45,6 +45,13 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('채팅'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.group_add_outlined),
+            tooltip: '그룹 채팅 만들기',
+            onPressed: () => context.push('/chats/new/group'),
+          ),
+        ],
       ),
       body: state.isLoading && state.rooms.isEmpty
           ? const Center(child: CircularProgressIndicator())
@@ -120,14 +127,28 @@ class _ChatRoomTile extends ConsumerWidget {
     final lastMsg = room.lastMessage;
     final timeStr = lastMsg != null ? _formatTime(lastMsg.createdAt) : '';
 
-    // For DIRECT chats, find the other member to show their name/avatar
-    final otherMember = room.members.cast<ChatMember?>().firstWhere(
-          (m) => m!.userId != currentUserId,
-          orElse: () => room.members.isNotEmpty ? room.members.first : null,
-        );
-    final displayName =
-        room.name.isNotEmpty ? room.name : (otherMember?.nickname ?? '채팅');
-    final displayImage = room.imageUrl ?? otherMember?.profileImageUrl;
+    // Derive display name and avatar based on room type
+    String displayName;
+    String? displayImage;
+    bool showOnlineIndicator;
+    bool isOnline;
+
+    if (room.isGroup) {
+      displayName = room.name.isNotEmpty ? room.name : '그룹 채팅';
+      displayImage = room.imageUrl;
+      showOnlineIndicator = false;
+      isOnline = false;
+    } else {
+      final otherMember = room.members.cast<ChatMember?>().firstWhere(
+            (m) => m!.userId != currentUserId,
+            orElse: () => room.members.isNotEmpty ? room.members.first : null,
+          );
+      displayName =
+          room.name.isNotEmpty ? room.name : (otherMember?.nickname ?? '채팅');
+      displayImage = room.imageUrl ?? otherMember?.profileImageUrl;
+      showOnlineIndicator = otherMember != null;
+      isOnline = otherMember?.isOnline ?? false;
+    }
 
     return InkWell(
       onTap: () => context.push('/chats/${room.id}'),
@@ -136,13 +157,16 @@ class _ChatRoomTile extends ConsumerWidget {
         child: Row(
           children: [
             // ── Avatar ───────────────────────────────
-            AvatarWidget(
-              name: displayName,
-              imageUrl: displayImage,
-              radius: 26,
-              showOnlineIndicator: otherMember != null,
-              isOnline: otherMember?.isOnline ?? false,
-            ),
+            if (room.isGroup && displayImage == null)
+              _GroupAvatar(room: room, radius: 26)
+            else
+              AvatarWidget(
+                name: displayName,
+                imageUrl: displayImage,
+                radius: 26,
+                showOnlineIndicator: showOnlineIndicator,
+                isOnline: isOnline,
+              ),
             const SizedBox(width: 14),
 
             // ── Content ──────────────────────────────
@@ -150,20 +174,38 @@ class _ChatRoomTile extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Room name + time
+                  // Room name + member count (group) + time
                   Row(
                     children: [
                       Expanded(
-                        child: Text(
-                          displayName,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight:
-                                hasUnread ? FontWeight.w700 : FontWeight.w500,
-                            color: const Color(0xFF1C1C1E),
-                          ),
+                        child: Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                displayName,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: hasUnread
+                                      ? FontWeight.w700
+                                      : FontWeight.w500,
+                                  color: const Color(0xFF1C1C1E),
+                                ),
+                              ),
+                            ),
+                            if (room.isGroup) ...[
+                              const SizedBox(width: 4),
+                              Text(
+                                '${room.memberCount}',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Color(0xFF8E8E93),
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
                       ),
                       if (timeStr.isNotEmpty)
@@ -258,5 +300,26 @@ class _ChatRoomTile extends ConsumerWidget {
     } else {
       return DateFormat('MM/dd').format(dateTime);
     }
+  }
+}
+
+/// Group avatar: shows a group icon with member count overlay
+class _GroupAvatar extends StatelessWidget {
+  final ChatRoomModel room;
+  final double radius;
+
+  const _GroupAvatar({required this.room, this.radius = 26});
+
+  @override
+  Widget build(BuildContext context) {
+    return CircleAvatar(
+      radius: radius,
+      backgroundColor: AppTheme.primaryLight.withValues(alpha: 0.3),
+      child: Icon(
+        Icons.group,
+        size: radius * 0.9,
+        color: AppTheme.primaryDark,
+      ),
+    );
   }
 }

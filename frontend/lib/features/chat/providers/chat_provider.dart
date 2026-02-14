@@ -65,8 +65,12 @@ class ChatRoomsNotifier extends StateNotifier<ChatRoomsState> {
     try {
       final data = jsonDecode(frame.body!) as Map<String, dynamic>;
       final eventType = data['type'] as String?;
-      if (eventType == 'NEW_MESSAGE' || eventType == 'MESSAGE_DELETED') {
-        // Refresh room list to update last message and unread counts
+      if (eventType == 'NEW_MESSAGE' ||
+          eventType == 'MESSAGE_DELETED' ||
+          eventType == 'MEMBER_JOINED' ||
+          eventType == 'MEMBER_LEFT' ||
+          eventType == 'MEMBER_KICKED' ||
+          eventType == 'ROOM_UPDATED') {
         loadRooms();
       }
     } catch (_) {}
@@ -107,6 +111,18 @@ class ChatRoomsNotifier extends StateNotifier<ChatRoomsState> {
 
   Future<ChatRoomModel> createDirectRoom(int friendId) async {
     final room = await _repository.createDirectChatRoom(friendId);
+    await loadRooms();
+    return room;
+  }
+
+  Future<ChatRoomModel> createGroupRoom({
+    required String name,
+    required List<int> memberIds,
+  }) async {
+    final room = await _repository.createGroupChatRoom(
+      name: name,
+      memberIds: memberIds,
+    );
     await loadRooms();
     return room;
   }
@@ -401,6 +417,115 @@ final messagesProvider = StateNotifierProvider.family<MessagesNotifier,
   return MessagesNotifier(
     ref.watch(chatRepositoryProvider),
     ref.watch(stompServiceProvider),
+    roomId,
+  );
+});
+
+// ═══════════════════════════════════════════════════════════════
+// Chat Members Provider (for group management)
+// ═══════════════════════════════════════════════════════════════
+
+class ChatMembersState {
+  final List<ChatMember> members;
+  final bool isLoading;
+  final String? errorMessage;
+
+  const ChatMembersState({
+    this.members = const [],
+    this.isLoading = false,
+    this.errorMessage,
+  });
+
+  ChatMembersState copyWith({
+    List<ChatMember>? members,
+    bool? isLoading,
+    String? errorMessage,
+  }) {
+    return ChatMembersState(
+      members: members ?? this.members,
+      isLoading: isLoading ?? this.isLoading,
+      errorMessage: errorMessage,
+    );
+  }
+}
+
+class ChatMembersNotifier extends StateNotifier<ChatMembersState> {
+  final ChatRepository _repository;
+  final int roomId;
+
+  ChatMembersNotifier(this._repository, this.roomId)
+      : super(const ChatMembersState());
+
+  Future<void> loadMembers() async {
+    state = state.copyWith(isLoading: true, errorMessage: null);
+    try {
+      final members = await _repository.getChatMembers(roomId);
+      state = state.copyWith(members: members, isLoading: false);
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: _parseError(e),
+      );
+    }
+  }
+
+  Future<bool> inviteMembers(List<int> userIds) async {
+    try {
+      await _repository.inviteMembers(roomId, userIds);
+      await loadMembers();
+      return true;
+    } catch (e) {
+      state = state.copyWith(errorMessage: _parseError(e));
+      return false;
+    }
+  }
+
+  Future<bool> kickMember(int userId) async {
+    try {
+      await _repository.kickMember(roomId, userId);
+      state = state.copyWith(
+        members: state.members.where((m) => m.userId != userId).toList(),
+      );
+      return true;
+    } catch (e) {
+      state = state.copyWith(errorMessage: _parseError(e));
+      return false;
+    }
+  }
+
+  Future<bool> leaveRoom() async {
+    try {
+      await _repository.leaveRoom(roomId);
+      return true;
+    } catch (e) {
+      state = state.copyWith(errorMessage: _parseError(e));
+      return false;
+    }
+  }
+
+  String _parseError(dynamic e) {
+    if (e is DioException) {
+      final data = e.response?.data;
+      if (data is Map<String, dynamic>) {
+        final error = data['error'];
+        if (error is Map<String, dynamic> && error['message'] != null) {
+          return error['message'] as String;
+        }
+      }
+      return 'Server error. Please try again.';
+    }
+    return 'An unexpected error occurred.';
+  }
+
+  void clearError() {
+    state = state.copyWith(errorMessage: null);
+  }
+}
+
+final chatMembersProvider = StateNotifierProvider.family<ChatMembersNotifier,
+    ChatMembersState, int>((ref, roomId) {
+  return ChatMembersNotifier(
+    ref.watch(chatRepositoryProvider),
     roomId,
   );
 });

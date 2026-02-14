@@ -290,12 +290,15 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
     final msgState = ref.watch(messagesProvider(widget.roomId));
     final roomState = ref.watch(chatRoomsProvider);
 
-    // Find room name from rooms list
-    final room = roomState.rooms
+    // Find room from rooms list
+    final rooms = roomState.rooms
         .where((r) => r.id == widget.roomId)
         .toList();
-    final roomName =
-        room.isNotEmpty ? room.first.name : '채팅';
+    final roomData = rooms.isNotEmpty ? rooms.first : null;
+    final isGroup = roomData?.isGroup ?? false;
+    final roomName = roomData != null
+        ? (roomData.name.isNotEmpty ? roomData.name : '채팅')
+        : '채팅';
 
     return PopScope(
       canPop: false,
@@ -331,20 +334,33 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
               roomName,
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
-            if (room.isNotEmpty && room.first.members.isNotEmpty)
+            if (roomData != null && roomData.members.isNotEmpty)
               Text(
-                room.first.members.any((m) => m.isOnline)
-                    ? '온라인'
-                    : '오프라인',
+                isGroup
+                    ? '${roomData.memberCount}명 참여중'
+                    : roomData.members.any((m) => m.isOnline)
+                        ? '온라인'
+                        : '오프라인',
                 style: TextStyle(
                   fontSize: 12,
-                  color: room.first.members.any((m) => m.isOnline)
-                      ? AppTheme.onlineGreen
-                      : const Color(0xFF8E8E93),
+                  color: isGroup
+                      ? const Color(0xFF8E8E93)
+                      : roomData.members.any((m) => m.isOnline)
+                          ? AppTheme.onlineGreen
+                          : const Color(0xFF8E8E93),
                 ),
               ),
           ],
         ),
+        actions: [
+          if (isGroup)
+            IconButton(
+              icon: const Icon(Icons.group_outlined),
+              tooltip: '멤버 관리',
+              onPressed: () =>
+                  context.push('/chats/${widget.roomId}/members'),
+            ),
+        ],
       ),
       body: Column(
         children: [

@@ -8,6 +8,8 @@ import '../../features/auth/presentation/register_screen.dart';
 import '../../features/auth/providers/auth_provider.dart';
 import '../../features/chat/presentation/chat_list_screen.dart';
 import '../../features/chat/presentation/chat_room_screen.dart';
+import '../../features/chat/presentation/create_group_screen.dart';
+import '../../features/chat/presentation/group_info_screen.dart';
 import '../../features/chat/providers/chat_provider.dart';
 import '../../features/friends/presentation/add_friend_screen.dart';
 import '../../features/friends/presentation/friend_requests_screen.dart';
@@ -103,12 +105,26 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       // ── Chat Room (full screen, outside shell) ──
       GoRoute(
+        path: '/chats/new/group',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const CreateGroupScreen(),
+      ),
+      GoRoute(
         path: '/chats/new',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) {
           final friendIdStr = state.uri.queryParameters['friendId'];
           final friendId = int.tryParse(friendIdStr ?? '') ?? 0;
           return _CreateChatRedirect(friendId: friendId);
+        },
+      ),
+      GoRoute(
+        path: '/chats/:roomId/members',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) {
+          final roomId =
+              int.tryParse(state.pathParameters['roomId'] ?? '') ?? 0;
+          return GroupInfoScreen(roomId: roomId);
         },
       ),
       GoRoute(
