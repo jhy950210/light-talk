@@ -48,4 +48,14 @@ interface MessageRepository : JpaRepository<Message, Long> {
         @Param("chatRoomId") chatRoomId: Long,
         @Param("lastReadMessageId") lastReadMessageId: Long
     ): Long
+
+    @Query("""
+        SELECT m FROM Message m
+        WHERE m.id IN (
+            SELECT MAX(m2.id) FROM Message m2
+            WHERE m2.chatRoomId IN :chatRoomIds
+            GROUP BY m2.chatRoomId
+        )
+    """)
+    fun findLastMessagesByRoomIds(@Param("chatRoomIds") chatRoomIds: List<Long>): List<Message>
 }

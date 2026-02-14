@@ -486,11 +486,76 @@ class ChatRoomService(
             return emptyList()
         }
 
-        return myMemberships.map { membership ->
-            val chatRoom = chatRoomRepository.findById(membership.chatRoomId)
-                .orElseThrow { ApiException(ErrorCode.CHAT_ROOM_NOT_FOUND) }
+        val roomIds = myMemberships.map { it.chatRoomId }
+        val membershipByRoomId = myMemberships.associateBy { it.chatRoomId }
 
-            buildChatRoomResponse(chatRoom, membership)
+        // Batch 1: Load all chat rooms (1 query)
+        val chatRooms = chatRoomRepository.findAllById(roomIds)
+        val chatRoomMap = chatRooms.associateBy { it.id }
+
+        // Batch 2: Load all active members for these rooms (1 query)
+        val allMembers = chatMemberRepository.findActiveByRoomIds(roomIds)
+        val membersByRoomId = allMembers.groupBy { it.chatRoomId }
+
+        // Batch 3: Load all users for those members (1 query)
+        val allUserIds = allMembers.map { it.userId }.distinct()
+        val userMap = if (allUserIds.isNotEmpty()) {
+            entityManager.createQuery(
+                "SELECT u FROM User u WHERE u.id IN :ids", User::class.java
+            ).setParameter("ids", allUserIds).resultList.associateBy { it.id }
+        } else {
+            emptyMap()
+        }
+
+        // Batch 4: Load last messages for all rooms (1 query)
+        val lastMessages = messageRepository.findLastMessagesByRoomIds(roomIds)
+        val lastMessageByRoomId = lastMessages.associateBy { it.chatRoomId }
+
+        // Batch 5: Compute unread counts (N individual queries - unavoidable due to per-user lastReadMessageId)
+        // But this is still better than N*5 total queries
+        val unreadCounts = myMemberships.associate { membership ->
+            val lastReadId = membership.lastReadMessageId ?: 0L
+            membership.chatRoomId to messageRepository.countUnreadMessages(membership.chatRoomId, lastReadId)
+        }
+
+        return roomIds.mapNotNull { roomId ->
+            val chatRoom = chatRoomMap[roomId] ?: return@mapNotNull null
+            if (!membershipByRoomId.containsKey(roomId)) return@mapNotNull null
+            val members = membersByRoomId[roomId] ?: emptyList()
+
+            val memberInfos = members.map { member ->
+                val user = userMap[member.userId]
+                ChatMemberInfo(
+                    userId = member.userId,
+                    nickname = user?.nickname ?: "Unknown",
+                    profileImageUrl = user?.profileImageUrl,
+                    joinedAt = member.joinedAt,
+                    role = member.role
+                )
+            }
+
+            val lastMessage = lastMessageByRoomId[roomId]
+            val lastMessageInfo = lastMessage?.let {
+                LastMessageInfo(
+                    id = it.id,
+                    content = if (it.isDeleted) "" else it.content,
+                    senderId = it.senderId,
+                    type = it.type.name,
+                    createdAt = it.createdAt
+                )
+            }
+
+            ChatRoomResponse(
+                id = chatRoom.id,
+                type = chatRoom.type,
+                name = chatRoom.name,
+                imageUrl = chatRoom.imageUrl,
+                ownerId = chatRoom.ownerId,
+                maxMembers = chatRoom.maxMembers,
+                members = memberInfos,
+                lastMessage = lastMessageInfo,
+                unreadCount = unreadCounts[roomId] ?: 0L
+            )
         }.sortedByDescending { it.lastMessage?.createdAt ?: java.time.LocalDateTime.MIN }
     }
 

@@ -61,15 +61,16 @@ class MessageService(
         chatMemberRepository.findActiveByChatRoomIdAndUserId(chatRoomId, userId)
             ?: throw ApiException(ErrorCode.NOT_CHAT_MEMBER)
 
-        val pageable = PageRequest.of(0, size + 1)
+        val clampedSize = size.coerceIn(1, 100)
+        val pageable = PageRequest.of(0, clampedSize + 1)
         val messages = if (cursor != null) {
             messageRepository.findByChatRoomIdWithCursor(chatRoomId, cursor, pageable)
         } else {
             messageRepository.findByChatRoomIdLatest(chatRoomId, pageable)
         }
 
-        val hasMore = messages.size > size
-        val resultMessages = if (hasMore) messages.take(size) else messages
+        val hasMore = messages.size > clampedSize
+        val resultMessages = if (hasMore) messages.take(clampedSize) else messages
 
         val messageResponses = resultMessages.map { toMessageResponse(it) }
 

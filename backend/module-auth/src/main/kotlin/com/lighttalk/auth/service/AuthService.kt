@@ -10,9 +10,11 @@ import com.lighttalk.auth.repository.AuthUserRepository
 import com.lighttalk.core.entity.User
 import com.lighttalk.core.exception.ApiException
 import com.lighttalk.core.exception.ErrorCode
+import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.Duration
 
 @Service
 @Transactional(readOnly = true)
@@ -21,8 +23,16 @@ class AuthService(
     private val passwordEncoder: PasswordEncoder,
     private val jwtTokenProvider: JwtTokenProvider,
     private val otpService: OtpService,
-    private val blindIndexService: BlindIndexService
+    private val blindIndexService: BlindIndexService,
+    private val redisTemplate: RedisTemplate<String, String>
 ) {
+
+    companion object {
+        private const val LOGIN_FAIL_PREFIX = "login_fail:"
+        private const val LOGIN_LOCK_PREFIX = "login_lock:"
+        private const val MAX_LOGIN_ATTEMPTS = 5
+        private val LOCK_DURATION = Duration.ofMinutes(15)
+    }
 
     fun refreshToken(refreshToken: String): TokenResponse {
         if (!jwtTokenProvider.validateToken(refreshToken)) {
@@ -75,14 +85,43 @@ class AuthService(
 
     fun phoneLogin(request: PhoneLoginRequest): TokenResponse {
         val phoneHash = blindIndexService.generate(request.phoneNumber)
+
+        // Check if account is locked
+        val lockKey = "$LOGIN_LOCK_PREFIX$phoneHash"
+        if (redisTemplate.hasKey(lockKey) == true) {
+            throw ApiException(ErrorCode.LOGIN_LOCKED)
+        }
+
         val user = authUserRepository.findByPhoneBlindIndex(phoneHash)
             ?: throw ApiException(ErrorCode.USER_NOT_FOUND)
 
         if (!passwordEncoder.matches(request.password, user.passwordHash)) {
+            recordLoginFailure(phoneHash)
             throw ApiException(ErrorCode.INVALID_PASSWORD)
         }
 
+        // Login success — clear failure counter
+        clearLoginFailures(phoneHash)
+
         return generateTokenResponse(user.id)
+    }
+
+    private fun recordLoginFailure(phoneHash: String) {
+        val failKey = "$LOGIN_FAIL_PREFIX$phoneHash"
+        val count = redisTemplate.opsForValue().increment(failKey) ?: 1
+        if (count == 1L) {
+            redisTemplate.expire(failKey, LOCK_DURATION)
+        }
+        if (count >= MAX_LOGIN_ATTEMPTS) {
+            val lockKey = "$LOGIN_LOCK_PREFIX$phoneHash"
+            redisTemplate.opsForValue().set(lockKey, count.toString(), LOCK_DURATION)
+            redisTemplate.delete(failKey)
+        }
+    }
+
+    private fun clearLoginFailures(phoneHash: String) {
+        redisTemplate.delete("$LOGIN_FAIL_PREFIX$phoneHash")
+        redisTemplate.delete("$LOGIN_LOCK_PREFIX$phoneHash")
     }
 
     private fun generateTag(nickname: String): String {

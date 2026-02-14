@@ -17,7 +17,7 @@ class OnlineIndicator extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: isOnline ? AppTheme.onlineGreen : const Color(0xFFC7C7CC),
+        color: isOnline ? AppTheme.onlineGreen : AppTheme.textTertiary,
         shape: BoxShape.circle,
         border: Border.all(color: Colors.white, width: 2),
         boxShadow: isOnline

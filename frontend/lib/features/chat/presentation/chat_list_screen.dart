@@ -55,13 +55,52 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
       ),
       body: state.isLoading && state.rooms.isEmpty
           ? const Center(child: CircularProgressIndicator())
-          : state.rooms.isEmpty
-              ? _buildEmptyState(context)
-              : RefreshIndicator(
-                  onRefresh: () =>
-                      ref.read(chatRoomsProvider.notifier).loadRooms(),
-                  child: _buildChatList(context, state),
-                ),
+          : state.errorMessage != null && state.rooms.isEmpty
+              ? _buildErrorState(context, state.errorMessage!)
+              : state.rooms.isEmpty
+                  ? _buildEmptyState(context)
+                  : RefreshIndicator(
+                      onRefresh: () =>
+                          ref.read(chatRoomsProvider.notifier).loadRooms(),
+                      child: _buildChatList(context, state),
+                    ),
+    );
+  }
+
+  Widget _buildErrorState(BuildContext context, String message) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.cloud_off_outlined,
+              size: 80,
+              color: Colors.grey.shade300,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: AppTheme.textSecondary,
+                    fontWeight: FontWeight.w600,
+                  ),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: () =>
+                  ref.read(chatRoomsProvider.notifier).loadRooms(),
+              icon: const Icon(Icons.refresh),
+              label: const Text('다시 시도'),
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(200, 48),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -81,7 +120,7 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
             Text(
               '아직 대화가 없어요',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: const Color(0xFF8E8E93),
+                    color: AppTheme.textSecondary,
                     fontWeight: FontWeight.w600,
                   ),
             ),
@@ -89,7 +128,7 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
             Text(
               '친구 목록에서 대화를 시작해보세요',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: const Color(0xFFC7C7CC),
+                    color: AppTheme.textTertiary,
                   ),
             ),
           ],
@@ -190,7 +229,7 @@ class _ChatRoomTile extends ConsumerWidget {
                                   fontWeight: hasUnread
                                       ? FontWeight.w700
                                       : FontWeight.w500,
-                                  color: const Color(0xFF1C1C1E),
+                                  color: AppTheme.textPrimary,
                                 ),
                               ),
                             ),
@@ -200,7 +239,7 @@ class _ChatRoomTile extends ConsumerWidget {
                                 '${room.memberCount}',
                                 style: const TextStyle(
                                   fontSize: 14,
-                                  color: Color(0xFF8E8E93),
+                                  color: AppTheme.textSecondary,
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
@@ -215,7 +254,7 @@ class _ChatRoomTile extends ConsumerWidget {
                             fontSize: 12,
                             color: hasUnread
                                 ? AppTheme.primaryColor
-                                : const Color(0xFF8E8E93),
+                                : AppTheme.textSecondary,
                           ),
                         ),
                     ],
@@ -234,8 +273,8 @@ class _ChatRoomTile extends ConsumerWidget {
                           style: TextStyle(
                             fontSize: 14,
                             color: hasUnread
-                                ? const Color(0xFF3C3C43)
-                                : const Color(0xFF8E8E93),
+                                ? AppTheme.textBody
+                                : AppTheme.textSecondary,
                             fontWeight: hasUnread
                                 ? FontWeight.w500
                                 : FontWeight.normal,

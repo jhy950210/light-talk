@@ -240,7 +240,7 @@ class _GroupInfoScreenState extends ConsumerState<GroupInfoScreen> {
                   '${room.memberCount}명 참여중',
                   style: const TextStyle(
                     fontSize: 14,
-                    color: Color(0xFF8E8E93),
+                    color: AppTheme.textSecondary,
                   ),
                 ),
               ],
@@ -327,7 +327,7 @@ class _MemberTile extends StatelessWidget {
                 '나',
                 style: TextStyle(
                   fontSize: 11,
-                  color: Color(0xFF8E8E93),
+                  color: AppTheme.textSecondary,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -338,14 +338,14 @@ class _MemberTile extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
               decoration: BoxDecoration(
-                color: const Color(0xFFFFF3CD),
+                color: AppTheme.warningBackground,
                 borderRadius: BorderRadius.circular(4),
               ),
               child: const Text(
                 '방장',
                 style: TextStyle(
                   fontSize: 11,
-                  color: Color(0xFFF59E0B),
+                  color: AppTheme.warningAmber,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -359,13 +359,13 @@ class _MemberTile extends StatelessWidget {
           fontSize: 13,
           color: member.isOnline
               ? AppTheme.onlineGreen
-              : const Color(0xFFC7C7CC),
+              : AppTheme.textTertiary,
         ),
       ),
       trailing: showKick
           ? IconButton(
               icon: const Icon(Icons.remove_circle_outline, size: 20),
-              color: const Color(0xFF8E8E93),
+              color: AppTheme.textSecondary,
               onPressed: onKick,
             )
           : null,
@@ -488,7 +488,7 @@ class _InviteMembersSheetState extends ConsumerState<_InviteMembersSheet> {
                       child: Text(
                         '초대할 수 있는 친구가 없습니다',
                         style: TextStyle(
-                          color: Color(0xFF8E8E93),
+                          color: AppTheme.textSecondary,
                           fontSize: 15,
                         ),
                       ),
@@ -520,7 +520,7 @@ class _InviteMembersSheetState extends ConsumerState<_InviteMembersSheet> {
                                 : Icons.circle_outlined,
                             color: isSelected
                                 ? AppTheme.primaryColor
-                                : const Color(0xFFC7C7CC),
+                                : AppTheme.textTertiary,
                             size: 24,
                           ),
                           onTap: () {

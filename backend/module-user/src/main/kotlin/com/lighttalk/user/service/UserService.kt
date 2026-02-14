@@ -50,9 +50,11 @@ class UserService(
     }
 
     fun searchUsers(currentUserId: Long, query: String): List<UserResponse> {
+        val trimmedQuery = query.trim()
+
         // If query contains #, search by exact nickname#tag
-        if (query.contains("#")) {
-            val parts = query.split("#", limit = 2)
+        if (trimmedQuery.contains("#")) {
+            val parts = trimmedQuery.split("#", limit = 2)
             val nickname = parts[0]
             val tag = parts[1]
             val user = userRepository.findByNicknameAndTag(nickname, tag)
@@ -67,17 +69,24 @@ class UserService(
             ))
         }
 
-        // Otherwise search by nickname substring
-        val users = userRepository.findByNicknameContainingIgnoreCase(query)
-        return users.filter { it.id != currentUserId }.map { user ->
-            UserResponse(
-                id = user.id,
-                nickname = user.nickname,
-                tag = user.tag,
-                profileImageUrl = user.profileImageUrl,
-                isOnline = onlineStatusService.isOnline(user.id)
-            )
+        // Minimum query length for substring search
+        if (trimmedQuery.length < 2) {
+            throw ApiException(ErrorCode.SEARCH_QUERY_TOO_SHORT)
         }
+
+        // Otherwise search by nickname substring, limited to 20 results
+        val users = userRepository.findByNicknameContainingIgnoreCase(trimmedQuery)
+        return users.filter { it.id != currentUserId }
+            .take(20)
+            .map { user ->
+                UserResponse(
+                    id = user.id,
+                    nickname = user.nickname,
+                    tag = user.tag,
+                    profileImageUrl = user.profileImageUrl,
+                    isOnline = onlineStatusService.isOnline(user.id)
+                )
+            }
     }
 
     @Transactional

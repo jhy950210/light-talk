@@ -94,7 +94,7 @@ class _PhoneInputScreenState extends ConsumerState<PhoneInputScreen> {
                     '전화번호로 시작하기',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: const Color(0xFF1C1C1E),
+                          color: AppTheme.textPrimary,
                           fontWeight: FontWeight.w600,
                         ),
                   ),
@@ -149,7 +149,7 @@ class _PhoneInputScreenState extends ConsumerState<PhoneInputScreen> {
                         '이미 계정이 있으신가요? ',
                         style:
                             Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  color: const Color(0xFF8E8E93),
+                                  color: AppTheme.textSecondary,
                                 ),
                       ),
                       TextButton(

@@ -65,7 +65,7 @@ class _FriendRequestsScreenState extends ConsumerState<FriendRequestsScreen> {
             Text(
               '받은 친구 신청이 없어요',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: const Color(0xFF8E8E93),
+                    color: AppTheme.textSecondary,
                     fontWeight: FontWeight.w600,
                   ),
             ),
@@ -73,7 +73,7 @@ class _FriendRequestsScreenState extends ConsumerState<FriendRequestsScreen> {
             Text(
               '새로운 친구 신청이 오면 여기에 표시됩니다',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: const Color(0xFFC7C7CC),
+                    color: AppTheme.textTertiary,
                   ),
             ),
           ],
@@ -108,8 +108,8 @@ class _FriendRequestsScreenState extends ConsumerState<FriendRequestsScreen> {
           OutlinedButton(
             onPressed: () => _rejectRequest(request),
             style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFF8E8E93),
-              side: const BorderSide(color: Color(0xFFE5E5EA)),
+              foregroundColor: AppTheme.textSecondary,
+              side: const BorderSide(color: AppTheme.borderColor),
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               minimumSize: Size.zero,
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,

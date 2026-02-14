@@ -1,8 +1,8 @@
-import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/providers/providers.dart';
+import '../../../core/utils/error_utils.dart';
 import '../data/auth_repository.dart';
 import '../data/models/login_request.dart';
 import '../data/models/phone_login_request.dart';
@@ -113,7 +113,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        errorMessage: _parseError(e),
+        errorMessage: parseApiError(e),
       );
     }
   }
@@ -136,7 +136,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        errorMessage: _parseError(e),
+        errorMessage: parseApiError(e),
       );
     }
   }
@@ -161,7 +161,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        errorMessage: _parseError(e),
+        errorMessage: parseApiError(e),
       );
     }
   }
@@ -185,7 +185,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        errorMessage: _parseError(e),
+        errorMessage: parseApiError(e),
       );
     }
   }
@@ -215,7 +215,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        errorMessage: _parseError(e),
+        errorMessage: parseApiError(e),
       );
     }
   }
@@ -236,7 +236,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        errorMessage: _parseError(e),
+        errorMessage: parseApiError(e),
       );
     }
   }
@@ -270,7 +270,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        errorMessage: _parseError(e),
+        errorMessage: parseApiError(e),
       );
       return false;
     }
@@ -299,36 +299,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
     await _prefs.remove(ApiConstants.userIdKey);
     await _prefs.remove(ApiConstants.userNicknameKey);
     await _prefs.remove(ApiConstants.userTagKey);
-  }
-
-  String _parseError(dynamic e) {
-    if (e is DioException) {
-      // Try to extract server error message from response body
-      final data = e.response?.data;
-      if (data is Map<String, dynamic>) {
-        final error = data['error'];
-        if (error is Map<String, dynamic> && error['message'] != null) {
-          return error['message'] as String;
-        }
-        if (data['message'] != null) {
-          return data['message'] as String;
-        }
-      }
-      final status = e.response?.statusCode;
-      if (status == 400) return '입력 정보를 확인해주세요.';
-      if (status == 401) return '인증에 실패했습니다.';
-      if (status == 409) return '이미 등록된 전화번호입니다.';
-      if (status == 429) return '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.';
-      if (e.type == DioExceptionType.connectionError ||
-          e.type == DioExceptionType.connectionTimeout) {
-        return '서버에 연결할 수 없습니다.';
-      }
-      return '서버 오류가 발생했습니다. 다시 시도해주세요.';
-    }
-    if (e is Exception) {
-      return e.toString().replaceFirst('Exception: ', '');
-    }
-    return '알 수 없는 오류가 발생했습니다.';
   }
 
   void clearError() {

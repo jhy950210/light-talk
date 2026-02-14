@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stomp_dart_client/stomp_frame.dart';
@@ -8,6 +7,7 @@ import 'package:stomp_dart_client/stomp_handler.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/network/stomp_service.dart';
 import '../../../core/providers/providers.dart';
+import '../../../core/utils/error_utils.dart';
 import '../data/chat_repository.dart';
 import '../data/models/chat_room_model.dart';
 import '../data/models/message_model.dart';
@@ -90,23 +90,9 @@ class ChatRoomsNotifier extends StateNotifier<ChatRoomsState> {
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        errorMessage: _parseError(e),
+        errorMessage: parseApiError(e),
       );
     }
-  }
-
-  String _parseError(dynamic e) {
-    if (e is DioException) {
-      final data = e.response?.data;
-      if (data is Map<String, dynamic>) {
-        final error = data['error'];
-        if (error is Map<String, dynamic> && error['message'] != null) {
-          return error['message'] as String;
-        }
-      }
-      return 'Server error. Please try again.';
-    }
-    return 'An unexpected error occurred.';
   }
 
   Future<ChatRoomModel> createDirectRoom(int friendId) async {
@@ -216,23 +202,9 @@ class MessagesNotifier extends StateNotifier<MessagesState> {
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        errorMessage: _parseError(e),
+        errorMessage: parseApiError(e),
       );
     }
-  }
-
-  String _parseError(dynamic e) {
-    if (e is DioException) {
-      final data = e.response?.data;
-      if (data is Map<String, dynamic>) {
-        final error = data['error'];
-        if (error is Map<String, dynamic> && error['message'] != null) {
-          return error['message'] as String;
-        }
-      }
-      return 'Server error. Please try again.';
-    }
-    return 'An unexpected error occurred.';
   }
 
   Future<void> loadMoreMessages() async {
@@ -316,7 +288,7 @@ class MessagesNotifier extends StateNotifier<MessagesState> {
       await _repository.deleteMessage(roomId, messageId);
       _markMessageAsDeleted(messageId);
     } catch (e) {
-      state = state.copyWith(errorMessage: _parseError(e));
+      state = state.copyWith(errorMessage: parseApiError(e));
     }
   }
 
@@ -368,7 +340,7 @@ class MessagesNotifier extends StateNotifier<MessagesState> {
       state = state.copyWith(
         isUploading: false,
         uploadProgress: 0.0,
-        errorMessage: _parseError(e),
+        errorMessage: parseApiError(e),
       );
     }
   }
@@ -464,7 +436,7 @@ class ChatMembersNotifier extends StateNotifier<ChatMembersState> {
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        errorMessage: _parseError(e),
+        errorMessage: parseApiError(e),
       );
     }
   }
@@ -475,7 +447,7 @@ class ChatMembersNotifier extends StateNotifier<ChatMembersState> {
       await loadMembers();
       return true;
     } catch (e) {
-      state = state.copyWith(errorMessage: _parseError(e));
+      state = state.copyWith(errorMessage: parseApiError(e));
       return false;
     }
   }
@@ -488,7 +460,7 @@ class ChatMembersNotifier extends StateNotifier<ChatMembersState> {
       );
       return true;
     } catch (e) {
-      state = state.copyWith(errorMessage: _parseError(e));
+      state = state.copyWith(errorMessage: parseApiError(e));
       return false;
     }
   }
@@ -498,23 +470,9 @@ class ChatMembersNotifier extends StateNotifier<ChatMembersState> {
       await _repository.leaveRoom(roomId);
       return true;
     } catch (e) {
-      state = state.copyWith(errorMessage: _parseError(e));
+      state = state.copyWith(errorMessage: parseApiError(e));
       return false;
     }
-  }
-
-  String _parseError(dynamic e) {
-    if (e is DioException) {
-      final data = e.response?.data;
-      if (data is Map<String, dynamic>) {
-        final error = data['error'];
-        if (error is Map<String, dynamic> && error['message'] != null) {
-          return error['message'] as String;
-        }
-      }
-      return 'Server error. Please try again.';
-    }
-    return 'An unexpected error occurred.';
   }
 
   void clearError() {

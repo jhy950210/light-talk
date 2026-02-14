@@ -18,6 +18,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
   final _otpController = TextEditingController();
   final _focusNode = FocusNode();
   Timer? _timer;
+  DateTime? _expiresAt;
   int _remainingSeconds = 0;
   bool _isVerifying = false;
 
@@ -42,18 +43,24 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
 
   void _startTimer(int seconds) {
     _timer?.cancel();
-    setState(() {
-      _remainingSeconds = seconds;
+    _expiresAt = DateTime.now().add(Duration(seconds: seconds));
+    _updateRemaining();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      _updateRemaining();
     });
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (_remainingSeconds <= 0) {
-        timer.cancel();
-      } else {
-        setState(() {
-          _remainingSeconds--;
-        });
-      }
-    });
+  }
+
+  void _updateRemaining() {
+    final remaining = _expiresAt!.difference(DateTime.now()).inSeconds;
+    final clamped = remaining > 0 ? remaining : 0;
+    if (clamped != _remainingSeconds) {
+      setState(() {
+        _remainingSeconds = clamped;
+      });
+    }
+    if (clamped <= 0) {
+      _timer?.cancel();
+    }
   }
 
   String _formatTime(int seconds) {
@@ -128,7 +135,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                     context.go('/register/phone');
                   },
                   icon: const Icon(Icons.arrow_back_ios_rounded),
-                  color: const Color(0xFF8E8E93),
+                  color: AppTheme.textSecondary,
                 ),
               ),
               const SizedBox(height: 24),
@@ -139,7 +146,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFF1C1C1E),
+                      color: AppTheme.textPrimary,
                     ),
               ),
               const SizedBox(height: 8),
@@ -147,7 +154,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                 '$phoneDisplay로 전송된\n인증번호를 입력해주세요',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: const Color(0xFF8E8E93),
+                      color: AppTheme.textSecondary,
                     ),
               ),
               const SizedBox(height: 40),
@@ -188,7 +195,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                                 .headlineSmall
                                 ?.copyWith(
                                   fontWeight: FontWeight.w700,
-                                  color: const Color(0xFF1C1C1E),
+                                  color: AppTheme.textPrimary,
                                 ),
                           ),
                         );
@@ -247,7 +254,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                   style: TextStyle(
                     color: (_remainingSeconds <= 0 && !authState.isLoading)
                         ? AppTheme.primaryColor
-                        : const Color(0xFFC7C7CC),
+                        : AppTheme.textTertiary,
                   ),
                 ),
               ),

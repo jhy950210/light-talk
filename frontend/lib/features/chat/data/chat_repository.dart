@@ -60,9 +60,8 @@ class ChatRepository {
     required List<int> memberIds,
   }) async {
     final response = await _client.post(
-      ApiConstants.chats,
+      ApiConstants.chatsGroup,
       data: {
-        'type': 'GROUP',
         'name': name,
         'memberIds': memberIds,
       },

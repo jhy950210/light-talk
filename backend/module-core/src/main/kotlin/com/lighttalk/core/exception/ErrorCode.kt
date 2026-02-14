@@ -68,6 +68,10 @@ enum class ErrorCode(
     INVALID_ROLE(HttpStatus.BAD_REQUEST, "GC008", "유효하지 않은 역할입니다"),
     CANNOT_CHANGE_OWN_ROLE(HttpStatus.BAD_REQUEST, "GC009", "자신의 역할은 변경할 수 없습니다"),
 
+    // Login
+    LOGIN_LOCKED(HttpStatus.TOO_MANY_REQUESTS, "A005", "로그인 시도 횟수를 초과했습니다. 잠시 후 다시 시도해주세요"),
+    SEARCH_QUERY_TOO_SHORT(HttpStatus.BAD_REQUEST, "U007", "검색어는 최소 2자 이상이어야 합니다"),
+
     // Upload
     INVALID_FILE_TYPE(HttpStatus.BAD_REQUEST, "UP001", "허용되지 않은 파일 형식입니다"),
     FILE_TOO_LARGE(HttpStatus.BAD_REQUEST, "UP002", "파일 크기가 제한을 초과했습니다");

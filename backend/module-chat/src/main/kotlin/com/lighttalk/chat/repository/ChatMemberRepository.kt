@@ -36,6 +36,12 @@ interface ChatMemberRepository : JpaRepository<ChatMember, Long> {
 
     @Query("""
         SELECT cm FROM ChatMember cm
+        WHERE cm.chatRoomId IN :chatRoomIds AND cm.leftAt IS NULL
+    """)
+    fun findActiveByRoomIds(@Param("chatRoomIds") chatRoomIds: List<Long>): List<ChatMember>
+
+    @Query("""
+        SELECT cm FROM ChatMember cm
         WHERE cm.chatRoomId = :chatRoomId AND cm.userId = :userId AND cm.leftAt IS NULL
     """)
     fun findActiveByChatRoomIdAndUserId(

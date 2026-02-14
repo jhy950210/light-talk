@@ -38,6 +38,7 @@ class ApiConstants {
 
   // ── Chat ───────────────────────────────────────────────────
   static const String chats = '/api/v1/chats';
+  static const String chatsGroup = '/api/v1/chats/group';
   static String chatRoom(int roomId) => '/api/v1/chats/$roomId';
   static String messages(int roomId) => '/api/v1/chats/$roomId/messages';
   static String readReceipt(int roomId) =>

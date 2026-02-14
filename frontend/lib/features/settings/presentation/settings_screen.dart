@@ -39,7 +39,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       setState(() {
         _profileImageUrl = userData['profileImageUrl'] as String?;
       });
-    } catch (_) {}
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('프로필 정보를 불러올 수 없습니다'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 
   void _showProfileImagePicker() {
@@ -293,7 +302,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         '#${authState.tag}',
                         style: const TextStyle(
                           fontSize: 14,
-                          color: Color(0xFF8E8E93),
+                          color: AppTheme.textSecondary,
                         ),
                       ),
                   ],
@@ -305,7 +314,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
           // Logout
           ListTile(
-            leading: const Icon(Icons.logout, color: Color(0xFF8E8E93)),
+            leading: const Icon(Icons.logout, color: AppTheme.textSecondary),
             title: const Text('로그아웃'),
             onTap: () async {
               final confirmed = await showDialog<bool>(
@@ -341,7 +350,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ),
             subtitle: const Text(
               '계정과 모든 데이터가 영구적으로 삭제됩니다',
-              style: TextStyle(fontSize: 12, color: Color(0xFF8E8E93)),
+              style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
             ),
             onTap: () => _showWithdrawalDialog(context, ref),
           ),

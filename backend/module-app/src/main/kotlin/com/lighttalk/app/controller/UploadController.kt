@@ -2,6 +2,7 @@ package com.lighttalk.app.controller
 
 import com.lighttalk.app.dto.PresignRequest
 import com.lighttalk.app.dto.UploadPurpose
+import com.lighttalk.chat.repository.ChatMemberRepository
 import com.lighttalk.core.dto.ApiResponse
 import com.lighttalk.core.exception.ApiException
 import com.lighttalk.core.exception.ErrorCode
@@ -19,7 +20,8 @@ import java.util.UUID
 @RestController
 @RequestMapping("/api/v1/upload")
 class UploadController(
-    private val fileStorageService: FileStorageService
+    private val fileStorageService: FileStorageService,
+    private val chatMemberRepository: ChatMemberRepository
 ) {
 
     companion object {
@@ -40,6 +42,7 @@ class UploadController(
         @Valid @RequestBody request: PresignRequest
     ): ResponseEntity<ApiResponse<PresignedUrlResponse>> {
         validateRequest(request)
+        validateChatMembership(userId, request)
 
         val path = generatePath(userId, request)
         val response = fileStorageService.generatePresignedUploadUrl(
@@ -77,6 +80,14 @@ class UploadController(
                     throw ApiException(ErrorCode.FILE_TOO_LARGE, "동영상은 50MB 이하만 허용됩니다")
                 }
             }
+        }
+    }
+
+    private fun validateChatMembership(userId: Long, request: PresignRequest) {
+        if (request.purpose == UploadPurpose.CHAT_IMAGE || request.purpose == UploadPurpose.CHAT_VIDEO) {
+            val roomId = request.chatRoomId ?: return
+            chatMemberRepository.findActiveByChatRoomIdAndUserId(roomId, userId)
+                ?: throw ApiException(ErrorCode.NOT_CHAT_MEMBER)
         }
     }
 

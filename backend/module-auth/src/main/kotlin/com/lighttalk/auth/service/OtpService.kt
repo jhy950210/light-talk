@@ -5,8 +5,8 @@ import com.lighttalk.core.exception.ApiException
 import com.lighttalk.core.exception.ErrorCode
 import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.stereotype.Service
+import java.security.SecureRandom
 import java.time.Duration
-import java.util.Random
 import java.util.UUID
 import java.util.concurrent.TimeUnit
 
@@ -30,7 +30,7 @@ class OtpService(
             throw ApiException(ErrorCode.OTP_RATE_LIMIT_EXCEEDED)
         }
 
-        val code = String.format("%06d", Random().nextInt(1000000))
+        val code = String.format("%06d", SecureRandom().nextInt(1000000))
         val otpKey = "otp:$phoneHash"
         redisTemplate.opsForValue().set(otpKey, "$code:0", Duration.ofMinutes(5))
 

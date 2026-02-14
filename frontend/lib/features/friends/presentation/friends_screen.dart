@@ -50,13 +50,52 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
       ),
       body: state.isLoading && state.friends.isEmpty
           ? const Center(child: CircularProgressIndicator())
-          : state.friends.isEmpty
-              ? _buildEmptyState(context)
-              : RefreshIndicator(
-                  onRefresh: () =>
-                      ref.read(friendsProvider.notifier).loadFriends(),
-                  child: _buildFriendsList(context, state),
-                ),
+          : state.errorMessage != null && state.friends.isEmpty
+              ? _buildErrorState(context, state.errorMessage!)
+              : state.friends.isEmpty
+                  ? _buildEmptyState(context)
+                  : RefreshIndicator(
+                      onRefresh: () =>
+                          ref.read(friendsProvider.notifier).loadFriends(),
+                      child: _buildFriendsList(context, state),
+                    ),
+    );
+  }
+
+  Widget _buildErrorState(BuildContext context, String message) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.cloud_off_outlined,
+              size: 80,
+              color: Colors.grey.shade300,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: AppTheme.textSecondary,
+                    fontWeight: FontWeight.w600,
+                  ),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: () =>
+                  ref.read(friendsProvider.notifier).loadFriends(),
+              icon: const Icon(Icons.refresh),
+              label: const Text('다시 시도'),
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(200, 48),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -76,7 +115,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
             Text(
               '아직 친구가 없어요',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: const Color(0xFF8E8E93),
+                    color: AppTheme.textSecondary,
                     fontWeight: FontWeight.w600,
                   ),
             ),
@@ -84,7 +123,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
             Text(
               '친구를 추가하고 대화를 시작하세요!',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: const Color(0xFFC7C7CC),
+                    color: AppTheme.textTertiary,
                   ),
             ),
             const SizedBox(height: 24),
@@ -134,7 +173,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
           Text(
             title,
             style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  color: const Color(0xFF8E8E93),
+                  color: AppTheme.textSecondary,
                   fontWeight: FontWeight.w600,
                 ),
           ),
@@ -148,7 +187,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
             child: Text(
               count,
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: const Color(0xFF8E8E93),
+                    color: AppTheme.textSecondary,
                     fontWeight: FontWeight.w600,
                   ),
             ),
@@ -216,7 +255,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
             fontSize: 13,
             color: friend.isOnline
                 ? AppTheme.onlineGreen
-                : const Color(0xFFC7C7CC),
+                : AppTheme.textTertiary,
           ),
         ),
         trailing: IconButton(

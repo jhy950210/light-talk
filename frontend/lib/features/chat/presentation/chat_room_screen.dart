@@ -344,10 +344,10 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
                 style: TextStyle(
                   fontSize: 12,
                   color: isGroup
-                      ? const Color(0xFF8E8E93)
+                      ? AppTheme.textSecondary
                       : roomData.members.any((m) => m.isOnline)
                           ? AppTheme.onlineGreen
-                          : const Color(0xFF8E8E93),
+                          : AppTheme.textSecondary,
                 ),
               ),
           ],
@@ -419,7 +419,7 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
             Text(
               '첫 메시지를 보내보세요!',
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: const Color(0xFF8E8E93),
+                    color: AppTheme.textSecondary,
                   ),
             ),
           ],
@@ -512,14 +512,14 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           decoration: BoxDecoration(
-            color: const Color(0xFFE5E5EA).withValues(alpha: 0.7),
+            color: AppTheme.borderColor.withValues(alpha: 0.7),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Text(
             label,
             style: const TextStyle(
               fontSize: 12,
-              color: Color(0xFF8E8E93),
+              color: AppTheme.textSecondary,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -563,7 +563,7 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
                 child: Icon(
                   Icons.add_circle_outline,
                   color: msgState.isUploading
-                      ? const Color(0xFFE5E5EA)
+                      ? AppTheme.borderColor
                       : AppTheme.primaryColor,
                   size: 26,
                 ),
@@ -605,7 +605,7 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
             child: Material(
               color: _messageController.text.trim().isNotEmpty
                   ? AppTheme.primaryColor
-                  : const Color(0xFFE5E5EA),
+                  : AppTheme.borderColor,
               shape: const CircleBorder(),
               child: InkWell(
                 onTap: _messageController.text.trim().isNotEmpty
@@ -620,7 +620,7 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
                     Icons.arrow_upward_rounded,
                     color: _messageController.text.trim().isNotEmpty
                         ? Colors.white
-                        : const Color(0xFF8E8E93),
+                        : AppTheme.textSecondary,
                     size: 22,
                   ),
                 ),
@@ -693,7 +693,7 @@ class _MessageBubble extends StatelessWidget {
                 timeStr,
                 style: const TextStyle(
                   fontSize: 11,
-                  color: Color(0xFFC7C7CC),
+                  color: AppTheme.textTertiary,
                 ),
               ),
             ),
@@ -711,7 +711,7 @@ class _MessageBubble extends StatelessWidget {
                       style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF8E8E93),
+                        color: AppTheme.textSecondary,
                       ),
                     ),
                   ),
@@ -748,7 +748,7 @@ class _MessageBubble extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 15,
                         color:
-                            isMine ? Colors.white : const Color(0xFF1C1C1E),
+                            isMine ? Colors.white : AppTheme.textPrimary,
                         height: 1.35,
                       ),
                     ),
@@ -764,7 +764,7 @@ class _MessageBubble extends StatelessWidget {
                 timeStr,
                 style: const TextStyle(
                   fontSize: 11,
-                  color: Color(0xFFC7C7CC),
+                  color: AppTheme.textTertiary,
                 ),
               ),
             ),
@@ -802,7 +802,7 @@ class _MessageBubble extends StatelessWidget {
                 timeStr,
                 style: const TextStyle(
                   fontSize: 11,
-                  color: Color(0xFFC7C7CC),
+                  color: AppTheme.textTertiary,
                 ),
               ),
             ),
@@ -814,10 +814,10 @@ class _MessageBubble extends StatelessWidget {
               padding:
                   const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
-                color: const Color(0xFFF2F2F7),
+                color: AppTheme.surfaceLight,
                 borderRadius: BorderRadius.circular(18),
                 border: Border.all(
-                  color: const Color(0xFFE5E5EA),
+                  color: AppTheme.borderColor,
                   width: 0.5,
                 ),
               ),
@@ -827,14 +827,14 @@ class _MessageBubble extends StatelessWidget {
                   Icon(
                     Icons.block,
                     size: 14,
-                    color: Color(0xFF8E8E93),
+                    color: AppTheme.textSecondary,
                   ),
                   SizedBox(width: 6),
                   Text(
                     '삭제된 메시지입니다',
                     style: TextStyle(
                       fontSize: 14,
-                      color: Color(0xFF8E8E93),
+                      color: AppTheme.textSecondary,
                       fontStyle: FontStyle.italic,
                       height: 1.35,
                     ),
@@ -850,7 +850,7 @@ class _MessageBubble extends StatelessWidget {
                 timeStr,
                 style: const TextStyle(
                   fontSize: 11,
-                  color: Color(0xFFC7C7CC),
+                  color: AppTheme.textTertiary,
                 ),
               ),
             ),
@@ -866,14 +866,14 @@ class _MessageBubble extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           decoration: BoxDecoration(
-            color: const Color(0xFFE5E5EA).withValues(alpha: 0.5),
+            color: AppTheme.borderColor.withValues(alpha: 0.5),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Text(
             message.content,
             style: const TextStyle(
               fontSize: 12,
-              color: Color(0xFF8E8E93),
+              color: AppTheme.textSecondary,
             ),
           ),
         ),

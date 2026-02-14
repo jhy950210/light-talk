@@ -110,7 +110,7 @@ class _CreateGroupScreenState extends ConsumerState<CreateGroupScreen> {
                     style: TextStyle(
                       color: _selectedIds.length >= 2
                           ? AppTheme.primaryColor
-                          : const Color(0xFFC7C7CC),
+                          : AppTheme.textTertiary,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -207,7 +207,7 @@ class _CreateGroupScreenState extends ConsumerState<CreateGroupScreen> {
               style: TextStyle(
                 fontSize: 13,
                 color: _selectedIds.length < 2
-                    ? const Color(0xFF8E8E93)
+                    ? AppTheme.textSecondary
                     : AppTheme.onlineGreen,
               ),
             ),
@@ -225,7 +225,7 @@ class _CreateGroupScreenState extends ConsumerState<CreateGroupScreen> {
                               ? '검색 결과가 없습니다'
                               : '친구가 없습니다',
                           style: const TextStyle(
-                            color: Color(0xFF8E8E93),
+                            color: AppTheme.textSecondary,
                             fontSize: 15,
                           ),
                         ),
@@ -288,7 +288,7 @@ class _FriendSelectTile extends StatelessWidget {
       ),
       trailing: Icon(
         isSelected ? Icons.check_circle : Icons.circle_outlined,
-        color: isSelected ? AppTheme.primaryColor : const Color(0xFFC7C7CC),
+        color: isSelected ? AppTheme.primaryColor : AppTheme.textTertiary,
         size: 24,
       ),
       onTap: onTap,

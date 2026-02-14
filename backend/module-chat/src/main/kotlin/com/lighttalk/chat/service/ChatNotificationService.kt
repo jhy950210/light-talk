@@ -25,20 +25,8 @@ class ChatNotificationService(
 
     fun notifyNewMessage(message: MessageResponse) {
         val event = ChatMessageEvent(message = message)
-
-        // Broadcast to chat room topic
-        val destination = "/topic/chat/${message.chatRoomId}"
-        messagingTemplate.convertAndSend(destination, event)
-        log.debug("Message broadcast to {}: messageId={}", destination, message.id)
-
-        // Also send to individual user queues for members not actively subscribed
-        val members = chatMemberRepository.findByChatRoomId(message.chatRoomId)
-        members.filter { it.isActive && it.userId != message.senderId }
-            .forEach { member ->
-                val userDestination = "/queue/user/${member.userId}"
-                messagingTemplate.convertAndSend(userDestination, event)
-                log.debug("Message sent to user queue: userId={}, messageId={}", member.userId, message.id)
-            }
+        broadcastToRoom(message.chatRoomId, event, excludeUserId = message.senderId)
+        log.debug("Message broadcast: chatRoomId={}, messageId={}", message.chatRoomId, message.id)
     }
 
     fun notifyMessageDeleted(chatRoomId: Long, messageId: Long) {
@@ -46,17 +34,8 @@ class ChatNotificationService(
             chatRoomId = chatRoomId,
             messageId = messageId
         )
-
-        val destination = "/topic/chat/$chatRoomId"
-        messagingTemplate.convertAndSend(destination, event)
-        log.debug("Message deleted event broadcast to {}: messageId={}", destination, messageId)
-
-        // Also send to individual user queues
-        val members = chatMemberRepository.findByChatRoomId(chatRoomId)
-        members.filter { it.isActive }.forEach { member ->
-            val userDestination = "/queue/user/${member.userId}"
-            messagingTemplate.convertAndSend(userDestination, event)
-        }
+        broadcastToRoom(chatRoomId, event)
+        log.debug("Message deleted event: chatRoomId={}, messageId={}", chatRoomId, messageId)
     }
 
     fun notifyReadReceipt(chatRoomId: Long, userId: Long, messageId: Long) {
@@ -65,10 +44,9 @@ class ChatNotificationService(
             userId = userId,
             messageId = messageId
         )
-
-        val destination = "/topic/chat/$chatRoomId"
-        messagingTemplate.convertAndSend(destination, event)
-        log.debug("Read receipt broadcast to {}: userId={}, messageId={}", destination, userId, messageId)
+        // Read receipts only go to topic (lightweight, no queue push needed)
+        messagingTemplate.convertAndSend("/topic/chat/$chatRoomId", event)
+        log.debug("Read receipt broadcast: chatRoomId={}, userId={}, messageId={}", chatRoomId, userId, messageId)
     }
 
     fun notifyMemberJoined(chatRoomId: Long, newMembers: List<ChatMemberInfo>) {
@@ -76,17 +54,8 @@ class ChatNotificationService(
             chatRoomId = chatRoomId,
             members = newMembers
         )
-
-        val destination = "/topic/chat/$chatRoomId"
-        messagingTemplate.convertAndSend(destination, event)
-        log.debug("Member joined event broadcast to {}: newMembers={}", destination, newMembers.map { it.userId })
-
-        // Send to individual user queues for all active members
-        val members = chatMemberRepository.findByChatRoomId(chatRoomId)
-        members.filter { it.isActive }.forEach { member ->
-            val userDestination = "/queue/user/${member.userId}"
-            messagingTemplate.convertAndSend(userDestination, event)
-        }
+        broadcastToRoom(chatRoomId, event)
+        log.debug("Member joined event: chatRoomId={}, newMembers={}", chatRoomId, newMembers.map { it.userId })
     }
 
     fun notifyMemberLeft(chatRoomId: Long, userId: Long, newOwnerId: Long?) {
@@ -95,17 +64,8 @@ class ChatNotificationService(
             userId = userId,
             newOwnerId = newOwnerId
         )
-
-        val destination = "/topic/chat/$chatRoomId"
-        messagingTemplate.convertAndSend(destination, event)
-        log.debug("Member left event broadcast to {}: userId={}, newOwnerId={}", destination, userId, newOwnerId)
-
-        // Send to individual user queues for remaining active members
-        val members = chatMemberRepository.findByChatRoomId(chatRoomId)
-        members.filter { it.isActive }.forEach { member ->
-            val userDestination = "/queue/user/${member.userId}"
-            messagingTemplate.convertAndSend(userDestination, event)
-        }
+        broadcastToRoom(chatRoomId, event)
+        log.debug("Member left event: chatRoomId={}, userId={}, newOwnerId={}", chatRoomId, userId, newOwnerId)
     }
 
     fun notifyChatRoomUpdated(chatRoomId: Long, name: String?, imageUrl: String?) {
@@ -114,17 +74,8 @@ class ChatNotificationService(
             name = name,
             imageUrl = imageUrl
         )
-
-        val destination = "/topic/chat/$chatRoomId"
-        messagingTemplate.convertAndSend(destination, event)
-        log.debug("Chat room updated event broadcast to {}: name={}", destination, name)
-
-        // Send to individual user queues for all active members
-        val members = chatMemberRepository.findByChatRoomId(chatRoomId)
-        members.filter { it.isActive }.forEach { member ->
-            val userDestination = "/queue/user/${member.userId}"
-            messagingTemplate.convertAndSend(userDestination, event)
-        }
+        broadcastToRoom(chatRoomId, event)
+        log.debug("Chat room updated event: chatRoomId={}, name={}", chatRoomId, name)
     }
 
     fun notifyRoleChanged(chatRoomId: Long, userId: Long, newRole: ChatMemberRole) {
@@ -133,16 +84,30 @@ class ChatNotificationService(
             userId = userId,
             newRole = newRole
         )
+        broadcastToRoom(chatRoomId, event)
+        log.debug("Role changed event: chatRoomId={}, userId={}, newRole={}", chatRoomId, userId, newRole)
+    }
 
-        val destination = "/topic/chat/$chatRoomId"
-        messagingTemplate.convertAndSend(destination, event)
-        log.debug("Role changed event broadcast to {}: userId={}, newRole={}", destination, userId, newRole)
+    /**
+     * Broadcasts an event to the chat room topic and to individual user queues
+     * for active members who are not currently subscribed to the room topic.
+     *
+     * The user queue serves as a notification channel for chat list updates
+     * (e.g., new message badge) when the user is not viewing the specific room.
+     *
+     * @param chatRoomId the chat room to broadcast to
+     * @param event the event payload
+     * @param excludeUserId optional user to exclude from queue notifications (e.g., the sender)
+     */
+    private fun broadcastToRoom(chatRoomId: Long, event: Any, excludeUserId: Long? = null) {
+        // 1. Broadcast to room topic (for users viewing this chat room)
+        messagingTemplate.convertAndSend("/topic/chat/$chatRoomId", event)
 
-        // Send to individual user queues for all active members
-        val members = chatMemberRepository.findByChatRoomId(chatRoomId)
-        members.filter { it.isActive }.forEach { member ->
-            val userDestination = "/queue/user/${member.userId}"
-            messagingTemplate.convertAndSend(userDestination, event)
-        }
+        // 2. Send to individual user queues (for chat list updates / push notifications)
+        val members = chatMemberRepository.findActiveByChatRoomId(chatRoomId)
+        members.filter { excludeUserId == null || it.userId != excludeUserId }
+            .forEach { member ->
+                messagingTemplate.convertAndSend("/queue/user/${member.userId}", event)
+            }
     }
 }

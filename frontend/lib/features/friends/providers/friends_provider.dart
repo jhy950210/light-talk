@@ -1,6 +1,6 @@
-import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/providers/providers.dart';
+import '../../../core/utils/error_utils.dart';
 import '../data/friend_repository.dart';
 import '../data/models/friend_model.dart';
 
@@ -50,7 +50,7 @@ class FriendsNotifier extends StateNotifier<FriendsState> {
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        errorMessage: _parseError(e),
+        errorMessage: parseApiError(e),
       );
     }
   }
@@ -61,7 +61,7 @@ class FriendsNotifier extends StateNotifier<FriendsState> {
       await loadFriends();
       return true;
     } catch (e) {
-      state = state.copyWith(errorMessage: _parseError(e));
+      state = state.copyWith(errorMessage: parseApiError(e));
       return false;
     }
   }
@@ -73,22 +73,8 @@ class FriendsNotifier extends StateNotifier<FriendsState> {
         friends: state.friends.where((f) => f.id != friendId).toList(),
       );
     } catch (e) {
-      state = state.copyWith(errorMessage: _parseError(e));
+      state = state.copyWith(errorMessage: parseApiError(e));
     }
-  }
-
-  String _parseError(dynamic e) {
-    if (e is DioException) {
-      final data = e.response?.data;
-      if (data is Map<String, dynamic>) {
-        final error = data['error'];
-        if (error is Map<String, dynamic> && error['message'] != null) {
-          return error['message'] as String;
-        }
-      }
-      return 'Server error. Please try again.';
-    }
-    return 'An unexpected error occurred.';
   }
 
   void updateOnlineStatus(int userId, bool isOnline) {
@@ -146,23 +132,9 @@ class UserSearchNotifier extends StateNotifier<UserSearchState> {
     } catch (e) {
       state = state.copyWith(
         isSearching: false,
-        errorMessage: _parseError(e),
+        errorMessage: parseApiError(e),
       );
     }
-  }
-
-  String _parseError(dynamic e) {
-    if (e is DioException) {
-      final data = e.response?.data;
-      if (data is Map<String, dynamic>) {
-        final error = data['error'];
-        if (error is Map<String, dynamic> && error['message'] != null) {
-          return error['message'] as String;
-        }
-      }
-      return 'Server error. Please try again.';
-    }
-    return 'An unexpected error occurred.';
   }
 
   void clear() {
@@ -210,7 +182,7 @@ class FriendRequestsNotifier extends StateNotifier<FriendRequestsState> {
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        errorMessage: _parseError(e),
+        errorMessage: parseApiError(e),
       );
     }
   }
@@ -224,7 +196,7 @@ class FriendRequestsNotifier extends StateNotifier<FriendRequestsState> {
       );
       return true;
     } catch (e) {
-      state = state.copyWith(errorMessage: _parseError(e));
+      state = state.copyWith(errorMessage: parseApiError(e));
       return false;
     }
   }
@@ -238,23 +210,9 @@ class FriendRequestsNotifier extends StateNotifier<FriendRequestsState> {
       );
       return true;
     } catch (e) {
-      state = state.copyWith(errorMessage: _parseError(e));
+      state = state.copyWith(errorMessage: parseApiError(e));
       return false;
     }
-  }
-
-  String _parseError(dynamic e) {
-    if (e is DioException) {
-      final data = e.response?.data;
-      if (data is Map<String, dynamic>) {
-        final error = data['error'];
-        if (error is Map<String, dynamic> && error['message'] != null) {
-          return error['message'] as String;
-        }
-      }
-      return 'Server error. Please try again.';
-    }
-    return 'An unexpected error occurred.';
   }
 
   void clearError() {

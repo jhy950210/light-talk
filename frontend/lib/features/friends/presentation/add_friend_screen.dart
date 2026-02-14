@@ -127,7 +127,7 @@ class _AddFriendScreenState extends ConsumerState<AddFriendScreen> {
           Text(
             '닉네임으로 사용자를 검색하세요',
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: const Color(0xFF8E8E93),
+                  color: AppTheme.textSecondary,
                 ),
           ),
         ],
@@ -149,14 +149,14 @@ class _AddFriendScreenState extends ConsumerState<AddFriendScreen> {
           Text(
             '사용자를 찾을 수 없습니다',
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: const Color(0xFF8E8E93),
+                  color: AppTheme.textSecondary,
                 ),
           ),
           const SizedBox(height: 4),
           Text(
             '다른 닉네임 또는 닉네임#태그로 검색해보세요',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: const Color(0xFFC7C7CC),
+                  color: AppTheme.textTertiary,
                 ),
           ),
         ],
@@ -190,7 +190,7 @@ class _AddFriendScreenState extends ConsumerState<AddFriendScreen> {
             '#${user.tag}',
             style: const TextStyle(
               fontSize: 13,
-              color: Color(0xFF8E8E93),
+              color: AppTheme.textSecondary,
             ),
           ),
           trailing: SizedBox(

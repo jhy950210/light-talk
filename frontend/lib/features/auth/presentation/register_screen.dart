@@ -98,7 +98,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     child: IconButton(
                       onPressed: _handleBack,
                       icon: const Icon(Icons.arrow_back_ios_rounded),
-                      color: const Color(0xFF8E8E93),
+                      color: AppTheme.textSecondary,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -110,7 +110,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     style:
                         Theme.of(context).textTheme.headlineMedium?.copyWith(
                               fontWeight: FontWeight.w700,
-                              color: const Color(0xFF1C1C1E),
+                              color: AppTheme.textPrimary,
                             ),
                   ),
                   const SizedBox(height: 8),
@@ -118,7 +118,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     '닉네임과 비밀번호를 설정해주세요',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: const Color(0xFF8E8E93),
+                          color: AppTheme.textSecondary,
                         ),
                   ),
                   const SizedBox(height: 40),
@@ -241,7 +241,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         '이미 계정이 있으신가요? ',
                         style:
                             Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  color: const Color(0xFF8E8E93),
+                                  color: AppTheme.textSecondary,
                                 ),
                       ),
                       TextButton(

@@ -16,6 +16,17 @@ class AppTheme {
   static const Color receivedBubble = Color(0xFFE9E9EB);
   static const Color unreadBadge = Color(0xFFFF3B30);
 
+  // ── Semantic Text Colors ──────────────────────────────────
+  static const Color textPrimary = Color(0xFF1C1C1E);
+  static const Color textSecondary = Color(0xFF8E8E93);
+  static const Color textTertiary = Color(0xFFC7C7CC);
+  static const Color textBody = Color(0xFF3C3C43);
+
+  // ── Semantic UI Colors ────────────────────────────────────
+  static const Color borderColor = Color(0xFFE5E5EA);
+  static const Color warningAmber = Color(0xFFF59E0B);
+  static const Color warningBackground = Color(0xFFFFF3CD);
+
   // ── Light Theme ────────────────────────────────────────────
   static ThemeData get lightTheme {
     final colorScheme = ColorScheme.fromSeed(
@@ -25,7 +36,7 @@ class AppTheme {
       onPrimary: Colors.white,
       secondary: accentColor,
       surface: Colors.white,
-      onSurface: const Color(0xFF1C1C1E),
+      onSurface: textPrimary,
       error: errorRed,
       surfaceContainerHighest: surfaceLight,
     );
@@ -37,20 +48,20 @@ class AppTheme {
       scaffoldBackgroundColor: Colors.white,
       appBarTheme: AppBarTheme(
         backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF1C1C1E),
+        foregroundColor: textPrimary,
         elevation: 0,
         scrolledUnderElevation: 0.5,
         centerTitle: true,
         titleTextStyle: GoogleFonts.notoSans(
           fontSize: 18,
           fontWeight: FontWeight.w600,
-          color: const Color(0xFF1C1C1E),
+          color: textPrimary,
         ),
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: Colors.white,
         selectedItemColor: primaryColor,
-        unselectedItemColor: Color(0xFF8E8E93),
+        unselectedItemColor: textSecondary,
         type: BottomNavigationBarType.fixed,
         elevation: 8,
       ),
@@ -76,7 +87,7 @@ class AppTheme {
           borderSide: const BorderSide(color: errorRed, width: 1.5),
         ),
         hintStyle: const TextStyle(
-          color: Color(0xFFC7C7CC),
+          color: textTertiary,
           fontSize: 15,
         ),
       ),
@@ -113,7 +124,7 @@ class AppTheme {
       ),
       dividerTheme: const DividerThemeData(
         thickness: 0.5,
-        color: Color(0xFFE5E5EA),
+        color: borderColor,
       ),
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
         backgroundColor: primaryColor,

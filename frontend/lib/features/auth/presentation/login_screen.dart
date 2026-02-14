@@ -87,7 +87,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     '로그인하여 계속하기',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: const Color(0xFF8E8E93),
+                          color: AppTheme.textSecondary,
                         ),
                   ),
                   const SizedBox(height: 48),
@@ -188,7 +188,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         '계정이 없으신가요? ',
                         style:
                             Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  color: const Color(0xFF8E8E93),
+                                  color: AppTheme.textSecondary,
                                 ),
                       ),
                       TextButton(

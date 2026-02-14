@@ -1,5 +1,6 @@
 package com.lighttalk.chat.listener
 
+import com.lighttalk.core.config.RedisKeyConstants
 import org.slf4j.LoggerFactory
 import org.springframework.context.event.EventListener
 import org.springframework.data.redis.core.RedisTemplate
@@ -15,11 +16,6 @@ class WebSocketEventListener(
 
     private val log = LoggerFactory.getLogger(javaClass)
 
-    companion object {
-        private const val ONLINE_USERS_KEY = "online:users"
-        private const val USER_SESSION_PREFIX = "online:session:"
-    }
-
     @EventListener
     fun handleSessionConnect(event: SessionConnectEvent) {
         val accessor = StompHeaderAccessor.wrap(event.message)
@@ -27,10 +23,10 @@ class WebSocketEventListener(
         val sessionId = accessor.sessionId ?: return
 
         // Store mapping: sessionId -> userId
-        redisTemplate.opsForValue().set("$USER_SESSION_PREFIX$sessionId", userId)
+        redisTemplate.opsForValue().set("${RedisKeyConstants.USER_SESSION_PREFIX}$sessionId", userId)
 
         // Add userId to online set
-        redisTemplate.opsForSet().add(ONLINE_USERS_KEY, userId)
+        redisTemplate.opsForSet().add(RedisKeyConstants.ONLINE_USERS_KEY, userId)
 
         log.info("User connected: userId={}, sessionId={}", userId, sessionId)
     }
@@ -41,13 +37,13 @@ class WebSocketEventListener(
         val sessionId = accessor.sessionId ?: return
 
         // Retrieve userId from session mapping
-        val userId = redisTemplate.opsForValue().get("$USER_SESSION_PREFIX$sessionId")
+        val userId = redisTemplate.opsForValue().get("${RedisKeyConstants.USER_SESSION_PREFIX}$sessionId")
         if (userId != null) {
             // Remove session mapping
-            redisTemplate.delete("$USER_SESSION_PREFIX$sessionId")
+            redisTemplate.delete("${RedisKeyConstants.USER_SESSION_PREFIX}$sessionId")
 
             // Remove from online set
-            redisTemplate.opsForSet().remove(ONLINE_USERS_KEY, userId)
+            redisTemplate.opsForSet().remove(RedisKeyConstants.ONLINE_USERS_KEY, userId)
 
             log.info("User disconnected: userId={}, sessionId={}", userId, sessionId)
         } else {
