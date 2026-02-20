@@ -43,6 +43,12 @@ jobs:
       - name: Build AAB
         run: flutter build appbundle --release
 
+      - name: Upload AAB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release.aab
+          path: frontend/build/app/outputs/bundle/release/app-release.aab
+
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.2'
