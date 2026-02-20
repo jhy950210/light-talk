@@ -147,7 +147,60 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
       ),
       itemBuilder: (context, index) {
         final room = state.rooms[index];
-        return _ChatRoomTile(room: room);
+        return Dismissible(
+          key: ValueKey(room.id),
+          direction: DismissDirection.endToStart,
+          background: Container(
+            alignment: Alignment.centerRight,
+            padding: const EdgeInsets.only(right: 24),
+            color: AppTheme.errorRed,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                const Icon(Icons.exit_to_app, color: Colors.white),
+                const SizedBox(width: 8),
+                Text(
+                  room.isGroup ? '나가기' : '삭제',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          confirmDismiss: (direction) async {
+            final title = room.isGroup ? '채팅방 나가기' : '대화 삭제';
+            final message = room.isGroup
+                ? '이 그룹 채팅방에서 나가시겠습니까?'
+                : '이 대화를 삭제하시겠습니까?';
+            return showDialog<bool>(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: Text(title),
+                content: Text(message),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(false),
+                    child: const Text('취소'),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(true),
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppTheme.errorRed,
+                    ),
+                    child: Text(room.isGroup ? '나가기' : '삭제'),
+                  ),
+                ],
+              ),
+            );
+          },
+          onDismissed: (direction) {
+            ref.read(chatRoomsProvider.notifier).leaveRoom(room.id);
+          },
+          child: _ChatRoomTile(room: room),
+        );
       },
     );
   }

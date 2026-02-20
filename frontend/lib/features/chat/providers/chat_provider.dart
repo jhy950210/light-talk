@@ -132,6 +132,17 @@ class ChatRoomsNotifier extends StateNotifier<ChatRoomsState> {
     state = state.copyWith(rooms: updated);
   }
 
+  Future<void> leaveRoom(int roomId) async {
+    try {
+      await _repository.leaveRoom(roomId);
+      state = state.copyWith(
+        rooms: state.rooms.where((r) => r.id != roomId).toList(),
+      );
+    } catch (e) {
+      state = state.copyWith(errorMessage: parseApiError(e));
+    }
+  }
+
   void clearError() {
     state = state.copyWith(errorMessage: null);
   }

@@ -323,8 +323,12 @@ class ChatRoomService(
         val chatRoom = chatRoomRepository.findById(roomId)
             .orElseThrow { ApiException(ErrorCode.CHAT_ROOM_NOT_FOUND) }
 
-        if (chatRoom.type != ChatRoomType.GROUP) {
-            throw ApiException(ErrorCode.CANNOT_LEAVE_DIRECT_CHAT)
+        // DIRECT 채팅은 바로 leftAt 설정하고 리턴 (방장 이양, 시스템 메시지 불필요)
+        if (chatRoom.type == ChatRoomType.DIRECT) {
+            val member = getActiveMemberOrThrow(roomId, userId)
+            member.leftAt = java.time.LocalDateTime.now()
+            chatMemberRepository.save(member)
+            return
         }
 
         val member = getActiveMemberOrThrow(roomId, userId)
