@@ -3,6 +3,8 @@ package com.lighttalk.auth.service
 import com.lighttalk.auth.sms.SmsService
 import com.lighttalk.core.exception.ApiException
 import com.lighttalk.core.exception.ErrorCode
+import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.stereotype.Service
 import java.security.SecureRandom
@@ -14,10 +16,22 @@ import java.util.concurrent.TimeUnit
 class OtpService(
     private val redisTemplate: RedisTemplate<String, String>,
     private val smsService: SmsService,
-    private val blindIndexService: BlindIndexService
+    private val blindIndexService: BlindIndexService,
+    @Value("\${demo.phone-number:}") private val demoPhoneNumber: String,
+    @Value("\${demo.otp-code:000000}") private val demoOtpCode: String
 ) {
+    private val log = LoggerFactory.getLogger(OtpService::class.java)
 
     fun sendOtp(phoneNumber: String): Int {
+        // Demo account bypass: store fixed OTP without sending SMS
+        if (demoPhoneNumber.isNotBlank() && phoneNumber == demoPhoneNumber) {
+            val phoneHash = blindIndexService.generate(phoneNumber)
+            val otpKey = "otp:$phoneHash"
+            redisTemplate.opsForValue().set(otpKey, "$demoOtpCode:0", Duration.ofMinutes(5))
+            log.info("[DEMO] OTP set for demo account: {}", phoneNumber)
+            return 300
+        }
+
         val phoneHash = blindIndexService.generate(phoneNumber)
 
         // Rate limit check

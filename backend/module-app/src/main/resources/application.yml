@@ -57,6 +57,10 @@ sms:
 blind-index:
   secret-key: ${BLIND_INDEX_SECRET:light-talk-blind-index-secret-key-change-in-production}
 
+demo:
+  phone-number: ${DEMO_PHONE_NUMBER:01000000000}
+  otp-code: ${DEMO_OTP_CODE:000000}
+
 storage:
   r2:
     endpoint: ${R2_ENDPOINT:https://account-id.r2.cloudflarestorage.com}
