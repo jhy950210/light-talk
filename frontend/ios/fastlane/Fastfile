@@ -91,11 +91,15 @@ platform :ios do
       submit_for_review: true,
       automatic_release: true,
       precheck_include_in_app_purchases: false,
-      review_user_name: "01000000000",
-      review_password: "tester2026",
-      review_notes: "Demo account login instructions:\n1. Enter phone number: 01000000000\n2. Tap 'Send OTP' — no real SMS is sent; enter 000000 (six zeros) as the verification code\n3. Enter password: tester2026\n\nFriend feature: Users search for friends by nickname or nickname#tag (e.g. John#0042). Both users must be registered. No contact list access is required.\n\nAll features including real-time chat, friend requests, profile editing, and media sharing are available with this demo account.",
+      app_review_information: {
+        demo_user: "01000000000",
+        demo_password: "tester2026",
+        notes: "Demo account login:\n1. Phone: 01000000000\n2. Tap 'Send OTP', then enter 000000 (six zeros) — fixed bypass code, no SMS sent\n3. Password: tester2026\n\nFriend search: Search by nickname or nickname#tag (e.g. John#0042). Both users must be registered. No contact list access needed.",
+      },
       submission_information: {
         add_id_info_uses_idfa: false,
+        export_compliance_uses_encryption: false,
+        export_compliance_is_exempt: true,
       },
     )
   end
