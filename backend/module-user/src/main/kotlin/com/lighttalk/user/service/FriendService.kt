@@ -128,15 +128,9 @@ class FriendService(
     }
 
     @Transactional
-    fun removeFriend(userId: Long, friendshipId: Long) {
-        val friendship = friendshipRepository.findById(friendshipId)
-            .orElseThrow { ApiException(ErrorCode.FRIEND_REQUEST_NOT_FOUND) }
-
-        if (friendship.userId != userId && friendship.friendId != userId) {
-            throw ApiException(ErrorCode.ACCESS_DENIED)
-        }
-
-        val friendId = if (friendship.userId == userId) friendship.friendId else friendship.userId
+    fun removeFriend(userId: Long, friendId: Long) {
+        val friendship = friendshipRepository.findByUserIdAndFriendId(userId, friendId)
+            ?: throw ApiException(ErrorCode.FRIEND_REQUEST_NOT_FOUND)
 
         friendshipRepository.delete(friendship)
 
