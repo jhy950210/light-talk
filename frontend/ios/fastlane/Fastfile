@@ -21,21 +21,14 @@ platform :ios do
 
     profile_name = lane_context[SharedValues::SIGH_NAME]
 
-    build_app(
-      workspace: "Runner.xcworkspace",
-      scheme: "Runner",
-      export_method: "app-store",
-      output_directory: "../build/ios/ipa",
-      output_name: "LightTalk.ipa",
-      export_options: {
-        signingStyle: "manual",
-        provisioningProfiles: {
-          "com.lighttalk.lightTalk" => profile_name
-        }
-      },
-    )
+    sh("cd ../../ && flutter build ipa --release \
+      --dart-define=BASE_URL=https://backend-production-4335.up.railway.app \
+      --dart-define=WS_URL=wss://backend-production-4335.up.railway.app/ws/raw \
+      --dart-define=WS_URL_SOCKJS=https://backend-production-4335.up.railway.app/ws \
+      --export-options-plist=ios/ExportOptions.plist")
 
     upload_to_testflight(
+      ipa: "../build/ios/ipa/라이트톡.ipa",
       skip_waiting_for_build_processing: true,
     )
   end
@@ -60,7 +53,7 @@ platform :ios do
 
   desc "Submit latest build for App Store review"
   lane :submit_review do |options|
-    build = options[:build] || "11"
+    build = options[:build] || "16"
 
     # 기존 심사 대기 중인 버전이 있으면 취소
     begin

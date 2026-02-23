@@ -95,3 +95,11 @@ light-talk/
 - **R2 환경변수**: `R2_ENDPOINT`, `R2_BUCKET`, `R2_ACCESS_KEY`, `R2_SECRET_KEY`, `R2_PUBLIC_URL`
 - **업로드 제한**: 이미지 10MB (JPEG/PNG/WebP/GIF), 동영상 50MB/3분 (MP4/MOV/WebM)
 - **버킷 구조**: `profiles/{userId}/{uuid}.{ext}`, `chats/{roomId}/{uuid}.{ext}`
+
+## CI/CD
+- **백엔드 자동 배포**: `main` 브랜치에 `backend/**`, `railway.toml`, `Dockerfile`, `.github/workflows/deploy.yml` 경로 변경 푸시 시 GitHub Actions → Railway 자동 배포
+- **워크플로**: `.github/workflows/deploy.yml` — Build & Test → Deploy to Railway (최대 3회 재시도)
+- **Railway 시크릿**: `RAILWAY_TOKEN`, `RAILWAY_PROJECT_ID` (GitHub Secrets에 설정)
+- **백엔드 URL**: `https://backend-production-4335.up.railway.app` (프론트 빌드 시 반드시 이 URL 사용)
+- **프론트 배포 빌드 시 dart-define 필수**: `BASE_URL=https://backend-production-4335.up.railway.app`, `WS_URL=wss://backend-production-4335.up.railway.app/ws/raw`, `WS_URL_SOCKJS=https://backend-production-4335.up.railway.app/ws`
+- **프론트엔드 배포**: 수동 (Fastlane으로 TestFlight 업로드)
