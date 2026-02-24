@@ -41,7 +41,11 @@ jobs:
           EOF
 
       - name: Build AAB
-        run: flutter build appbundle --release
+        run: |
+          flutter build appbundle --release \
+            --dart-define=BASE_URL=https://backend-production-4335.up.railway.app \
+            --dart-define=WS_URL=wss://backend-production-4335.up.railway.app/ws/raw \
+            --dart-define=WS_URL_SOCKJS=https://backend-production-4335.up.railway.app/ws
 
       - name: Upload AAB artifact
         uses: actions/upload-artifact@v4
