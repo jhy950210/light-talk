@@ -1,12 +1,12 @@
 default_platform(:android)
 
 platform :android do
-  desc "Upload AAB to Play Store internal track"
+  desc "Upload AAB to Play Store closed testing track"
   lane :deploy do
     upload_to_play_store(
-      track: "internal",
+      track: "alpha",
       aab: "../build/app/outputs/bundle/release/app-release.aab",
-      release_status: "draft",
+      release_status: "completed",
       skip_upload_apk: true,
       skip_upload_metadata: true,
       skip_upload_changelogs: true,
@@ -25,6 +25,21 @@ platform :android do
       skip_upload_changelogs: true,
       skip_upload_images: false,
       skip_upload_screenshots: false,
+    )
+  end
+
+  desc "Promote internal draft to closed testing"
+  lane :promote_to_closed do
+    upload_to_play_store(
+      track: "internal",
+      track_promote_to: "alpha",
+      release_status: "completed",
+      skip_upload_apk: true,
+      skip_upload_aab: true,
+      skip_upload_metadata: true,
+      skip_upload_changelogs: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true,
     )
   end
 
