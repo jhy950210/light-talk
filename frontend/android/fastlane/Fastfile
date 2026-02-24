@@ -1,9 +1,9 @@
 default_platform(:android)
 
 platform :android do
-  desc "Upload AAB to internal + closed testing tracks"
+  desc "Upload AAB to internal + promote to closed testing"
   lane :deploy do
-    # 1) 내부 테스트 (심사 없이 즉시 배포)
+    # 1) 내부 테스트에 업로드 (심사 없이 즉시 배포)
     upload_to_play_store(
       track: "internal",
       aab: "../build/app/outputs/bundle/release/app-release.aab",
@@ -15,12 +15,13 @@ platform :android do
       skip_upload_screenshots: true,
     )
 
-    # 2) 비공개 테스트 (심사 후 20명/14일 요건 충족용)
+    # 2) internal → alpha로 프로모트 (비공개 테스트)
     upload_to_play_store(
-      track: "alpha",
-      aab: "../build/app/outputs/bundle/release/app-release.aab",
+      track: "internal",
+      track_promote_to: "alpha",
       release_status: "completed",
       skip_upload_apk: true,
+      skip_upload_aab: true,
       skip_upload_metadata: true,
       skip_upload_changelogs: true,
       skip_upload_images: true,

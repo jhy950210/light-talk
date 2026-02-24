@@ -1,7 +1,7 @@
 name: light_talk
 description: A lightweight real-time chat application.
 publish_to: 'none'
-version: 1.0.0+21
+version: 1.0.0+22
 
 environment:
   sdk: '>=3.2.0 <4.0.0'
