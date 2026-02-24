@@ -101,5 +101,10 @@ light-talk/
 - **워크플로**: `.github/workflows/deploy.yml` — Build & Test → Deploy to Railway (최대 3회 재시도)
 - **Railway 시크릿**: `RAILWAY_TOKEN`, `RAILWAY_PROJECT_ID` (GitHub Secrets에 설정)
 - **백엔드 URL**: `https://backend-production-4335.up.railway.app` (프론트 빌드 시 반드시 이 URL 사용)
-- **프론트 배포 빌드 시 dart-define 필수**: `BASE_URL=https://backend-production-4335.up.railway.app`, `WS_URL=wss://backend-production-4335.up.railway.app/ws/raw`, `WS_URL_SOCKJS=https://backend-production-4335.up.railway.app/ws`
-- **프론트엔드 배포**: 수동 (Fastlane으로 TestFlight 업로드)
+- **프론트 배포 빌드 시 dart-define 필수 (iOS/Android 공통)**: 미설정 시 localhost:8080으로 접속하여 서버 연결 실패
+  - `BASE_URL=https://backend-production-4335.up.railway.app`
+  - `WS_URL=wss://backend-production-4335.up.railway.app/ws/raw`
+  - `WS_URL_SOCKJS=https://backend-production-4335.up.railway.app/ws`
+- **iOS 배포**: `cd frontend/ios && fastlane release` (Fastlane이 dart-define 포함하여 빌드 → TestFlight 업로드)
+- **Android 배포**: `main` 푸시 시 `.github/workflows/deploy-android.yml` → GitHub Actions 자동 빌드 → Play Store draft 업로드 (dart-define 워크플로에 포함됨)
+- **Android 패키지 주의**: namespace(`com.lighttalk.lightTalk`)와 실제 Kotlin 패키지(`com.lighttalk.light_talk`)가 다름 → AndroidManifest.xml에서 Activity 선언 시 반드시 전체 경로 사용 (`.MainActivity` 사용 금지)
