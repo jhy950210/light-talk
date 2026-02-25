@@ -225,6 +225,7 @@ class MessagesNotifier extends StateNotifier<MessagesState> {
         isLoading: false,
         hasMore: page.hasMore,
       );
+      markAsRead();
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
@@ -282,15 +283,32 @@ class MessagesNotifier extends StateNotifier<MessagesState> {
           state = state.copyWith(
             messages: [message, ...state.messages],
           );
+          markAsRead();
         }
         return;
       }
 
-      // Ignore other event types (READ_RECEIPT, MEMBER_JOINED, etc.)
+      if (eventType == 'READ_RECEIPT') {
+        final messageId = data['messageId'] as int;
+        _markMessagesAsRead(messageId);
+        return;
+      }
+
+      // Ignore other event types (MEMBER_JOINED, etc.)
       print('[Chat] Ignoring event type: $eventType');
     } catch (e) {
       print('[Chat] Failed to parse STOMP message: $e');
     }
+  }
+
+  void _markMessagesAsRead(int upToMessageId) {
+    final updated = state.messages.map((m) {
+      if (m.id <= upToMessageId && !m.isRead) {
+        return m.copyWith(isRead: true);
+      }
+      return m;
+    }).toList();
+    state = state.copyWith(messages: updated);
   }
 
   void _markMessageAsDeleted(int messageId) {

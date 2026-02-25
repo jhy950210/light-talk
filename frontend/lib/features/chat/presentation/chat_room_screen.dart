@@ -62,8 +62,9 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
   void _cleanup() {
     final notifier = ref.read(messagesProvider(widget.roomId).notifier);
     notifier.unsubscribeFromRoom();
-    notifier.markAsRead(); // fire-and-forget
-    ref.read(chatRoomsProvider.notifier).loadRooms();
+    notifier.markAsRead().then((_) {
+      ref.read(chatRoomsProvider.notifier).loadRooms();
+    });
   }
 
   void _onScroll() {
@@ -670,16 +671,31 @@ class _MessageBubble extends StatelessWidget {
               const SizedBox(width: 32),
             const SizedBox(width: 8),
           ],
-          // Time (for sent messages, show on left of bubble)
+          // Read status + Time (for sent messages, show on left of bubble)
           if (isMine)
             Padding(
               padding: const EdgeInsets.only(right: 6, bottom: 2),
-              child: Text(
-                timeStr,
-                style: const TextStyle(
-                  fontSize: 11,
-                  color: AppTheme.textTertiary,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (message.isRead)
+                    const Text(
+                      '읽음',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: AppTheme.primaryColor,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  Text(
+                    timeStr,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: AppTheme.textTertiary,
+                    ),
+                  ),
+                ],
               ),
             ),
           // Bubble

@@ -8,6 +8,7 @@ class MessageModel {
   final String type;
   final DateTime createdAt;
   final DateTime? deletedAt;
+  final bool isRead;
 
   const MessageModel({
     required this.id,
@@ -19,6 +20,7 @@ class MessageModel {
     this.type = 'TEXT',
     required this.createdAt,
     this.deletedAt,
+    this.isRead = false,
   });
 
   bool get isDeleted => deletedAt != null;
@@ -33,6 +35,21 @@ class MessageModel {
     return createdAt.isAfter(fiveMinutesAgo);
   }
 
+  MessageModel copyWith({bool? isRead}) {
+    return MessageModel(
+      id: id,
+      chatRoomId: chatRoomId,
+      senderId: senderId,
+      senderNickname: senderNickname,
+      senderProfileImageUrl: senderProfileImageUrl,
+      content: content,
+      type: type,
+      createdAt: createdAt,
+      deletedAt: deletedAt,
+      isRead: isRead ?? this.isRead,
+    );
+  }
+
   MessageModel copyWithDeleted() {
     return MessageModel(
       id: id,
@@ -44,6 +61,7 @@ class MessageModel {
       type: type,
       createdAt: createdAt,
       deletedAt: DateTime.now(),
+      isRead: isRead,
     );
   }
 
@@ -62,6 +80,7 @@ class MessageModel {
       deletedAt: json['deletedAt'] != null
           ? DateTime.parse(json['deletedAt'] as String)
           : null,
+      isRead: json['isRead'] as bool? ?? false,
     );
   }
 
@@ -75,6 +94,7 @@ class MessageModel {
         'type': type,
         'createdAt': createdAt.toIso8601String(),
         'deletedAt': deletedAt?.toIso8601String(),
+        'isRead': isRead,
       };
 
   bool isSentBy(int userId) => senderId == userId;

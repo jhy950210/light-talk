@@ -61,6 +61,12 @@ class MessageService(
         chatMemberRepository.findActiveByChatRoomIdAndUserId(chatRoomId, userId)
             ?: throw ApiException(ErrorCode.NOT_CHAT_MEMBER)
 
+        // Get all active members' lastReadMessageId to determine read status
+        val members = chatMemberRepository.findActiveByChatRoomId(chatRoomId)
+        val otherMembersLastRead = members
+            .filter { it.userId != userId }
+            .mapNotNull { it.lastReadMessageId }
+
         val clampedSize = size.coerceIn(1, 100)
         val pageable = PageRequest.of(0, clampedSize + 1)
         val messages = if (cursor != null) {
@@ -72,7 +78,7 @@ class MessageService(
         val hasMore = messages.size > clampedSize
         val resultMessages = if (hasMore) messages.take(clampedSize) else messages
 
-        val messageResponses = resultMessages.map { toMessageResponse(it) }
+        val messageResponses = resultMessages.map { toMessageResponse(it, otherMembersLastRead) }
 
         return MessagePageResponse(
             messages = messageResponses,
@@ -134,8 +140,9 @@ class MessageService(
         log.debug("Message soft-deleted: id={}, chatRoomId={}, userId={}", messageId, chatRoomId, userId)
     }
 
-    private fun toMessageResponse(message: Message): MessageResponse {
+    private fun toMessageResponse(message: Message, otherMembersLastRead: List<Long> = emptyList()): MessageResponse {
         val sender = entityManager.find(User::class.java, message.senderId)
+        val isRead = otherMembersLastRead.any { it >= message.id }
         return MessageResponse(
             id = message.id,
             chatRoomId = message.chatRoomId,
@@ -144,7 +151,7 @@ class MessageService(
             content = if (message.isDeleted) "" else message.content,
             type = message.type,
             createdAt = message.createdAt,
-            isRead = false,
+            isRead = isRead,
             deletedAt = message.deletedAt
         )
     }

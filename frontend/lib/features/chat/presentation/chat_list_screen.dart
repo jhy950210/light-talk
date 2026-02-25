@@ -222,14 +222,9 @@ class _ChatRoomTile extends ConsumerWidget {
     // Derive display name and avatar based on room type
     String displayName;
     String? displayImage;
-    bool showOnlineIndicator;
-    bool isOnline;
-
     if (room.isGroup) {
       displayName = room.name.isNotEmpty ? room.name : '그룹 채팅';
       displayImage = room.imageUrl;
-      showOnlineIndicator = false;
-      isOnline = false;
     } else {
       final otherMember = room.members.cast<ChatMember?>().firstWhere(
             (m) => m!.userId != currentUserId,
@@ -238,8 +233,6 @@ class _ChatRoomTile extends ConsumerWidget {
       displayName =
           room.name.isNotEmpty ? room.name : (otherMember?.nickname ?? '채팅');
       displayImage = room.imageUrl ?? otherMember?.profileImageUrl;
-      showOnlineIndicator = otherMember != null;
-      isOnline = otherMember?.isOnline ?? false;
     }
 
     return InkWell(
@@ -256,8 +249,8 @@ class _ChatRoomTile extends ConsumerWidget {
                 name: displayName,
                 imageUrl: displayImage,
                 radius: 26,
-                showOnlineIndicator: showOnlineIndicator,
-                isOnline: isOnline,
+                showOnlineIndicator: false,
+                isOnline: false,
               ),
             const SizedBox(width: 14),
 
