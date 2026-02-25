@@ -4,15 +4,15 @@ class ApiConstants {
   // ── Base URLs ──────────────────────────────────────────────
   static const String baseUrl = String.fromEnvironment(
     'BASE_URL',
-    defaultValue: 'http://localhost:8080',
+    defaultValue: 'https://backend-production-4335.up.railway.app',
   );
   static const String wsUrl = String.fromEnvironment(
     'WS_URL',
-    defaultValue: 'ws://localhost:8080/ws/raw',
+    defaultValue: 'wss://backend-production-4335.up.railway.app/ws/raw',
   );
   static const String wsUrlSockJS = String.fromEnvironment(
     'WS_URL_SOCKJS',
-    defaultValue: 'http://localhost:8080/ws',
+    defaultValue: 'https://backend-production-4335.up.railway.app/ws',
   );
 
   // ── Auth ───────────────────────────────────────────────────
