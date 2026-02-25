@@ -69,6 +69,15 @@ storage:
     secret-key: ${R2_SECRET_KEY:}
     public-url: ${R2_PUBLIC_URL:https://media.lighttalk.app}
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+
 logging:
   level:
     org.hibernate.SQL: DEBUG
