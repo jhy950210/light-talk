@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/constants/api_constants.dart';
 import '../../../core/theme/app_theme.dart';
 import '../providers/auth_provider.dart';
 
@@ -197,16 +196,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         child: const Text('회원가입'),
                       ),
                     ],
-                  ),
-                  const SizedBox(height: 16),
-                  // ── Debug: Server URL ──────────────────
-                  Text(
-                    'v1.0.0+23 | ${ApiConstants.baseUrl}',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppTheme.textTertiary,
-                          fontSize: 10,
-                        ),
                   ),
                 ],
               ),
