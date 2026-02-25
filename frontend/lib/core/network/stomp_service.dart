@@ -22,33 +22,66 @@ class StompService {
   bool get isConnected => _isConnected;
   Stream<bool> get connectionStream => _connectionController.stream;
 
+  void Function()? _onConnectCallback;
+  void Function()? _onDisconnectCallback;
+  Function(StompFrame)? _onErrorCallback;
+
   void connect({
     void Function()? onConnect,
     void Function()? onDisconnect,
     Function(StompFrame)? onError,
   }) {
+    _onConnectCallback = onConnect;
+    _onDisconnectCallback = onDisconnect;
+    _onErrorCallback = onError;
+    _connectWithCurrentToken();
+  }
+
+  void _connectWithCurrentToken() {
+    // Always read the latest token
     final token = _prefs.getString(ApiConstants.accessTokenKey) ?? '';
+    if (token.isEmpty) {
+      print('[STOMP] No token available, skipping connect');
+      return;
+    }
+
+    // Deactivate existing client
+    _client?.deactivate();
 
     final onConnectCb = (StompFrame frame) {
       _isConnected = true;
       _connectionController.add(true);
-      onConnect?.call();
+      _onConnectCallback?.call();
       print('[STOMP] Connected');
     };
     final onDisconnectCb = (StompFrame frame) {
       _isConnected = false;
       _connectionController.add(false);
-      onDisconnect?.call();
+      _onDisconnectCallback?.call();
       print('[STOMP] Disconnected');
     };
     final onWebSocketErrorCb = (dynamic error) {
       print('[STOMP] WebSocket Error: $error');
       _isConnected = false;
       _connectionController.add(false);
+      // Reconnect with fresh token after delay
+      Future.delayed(const Duration(seconds: 5), () {
+        if (!_isConnected) {
+          print('[STOMP] Reconnecting with fresh token...');
+          _connectWithCurrentToken();
+        }
+      });
     };
     final onStompErrorCb = (StompFrame frame) {
       print('[STOMP] Error: ${frame.body}');
-      onError?.call(frame);
+      _onErrorCallback?.call(frame);
+      // Reconnect with fresh token after delay
+      Future.delayed(const Duration(seconds: 5), () {
+        if (!_isConnected) {
+          print('[STOMP] Reconnecting with fresh token after error...');
+          _connectWithCurrentToken();
+        }
+      });
     };
 
     // Web uses SockJS endpoint (/ws), mobile uses raw WebSocket (/ws/raw)
@@ -61,7 +94,7 @@ class StompService {
             onDisconnect: onDisconnectCb,
             onWebSocketError: onWebSocketErrorCb,
             onStompError: onStompErrorCb,
-            reconnectDelay: const Duration(seconds: 5),
+            reconnectDelay: const Duration(seconds: 0), // We handle reconnection ourselves
           )
         : StompConfig(
             url: ApiConstants.wsUrl,
@@ -71,11 +104,10 @@ class StompService {
             onDisconnect: onDisconnectCb,
             onWebSocketError: onWebSocketErrorCb,
             onStompError: onStompErrorCb,
-            reconnectDelay: const Duration(seconds: 5),
+            reconnectDelay: const Duration(seconds: 0), // We handle reconnection ourselves
           );
 
     _client = StompClient(config: config);
-
     _client!.activate();
   }
 
