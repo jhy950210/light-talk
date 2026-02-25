@@ -48,7 +48,11 @@ class ChatRoomService(
         if (existingRoomId != null) {
             // 떠난 멤버가 있으면 재활성화 (채팅방 삭제 후 다시 대화 시작하는 경우)
             val members = chatMemberRepository.findByChatRoomId(existingRoomId)
-            members.filter { it.leftAt != null }.forEach { member ->
+            val inactiveMembers = members.filter { it.leftAt != null }
+            log.info("Reactivating direct chat: roomId={}, totalMembers={}, inactiveMembers={}",
+                existingRoomId, members.size, inactiveMembers.size)
+            inactiveMembers.forEach { member ->
+                log.info("Reactivating member: userId={}, leftAt={}", member.userId, member.leftAt)
                 member.leftAt = null
                 chatMemberRepository.save(member)
             }
