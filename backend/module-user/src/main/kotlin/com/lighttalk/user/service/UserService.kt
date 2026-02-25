@@ -90,6 +90,14 @@ class UserService(
     }
 
     @Transactional
+    fun updateFcmToken(userId: Long, fcmToken: String?) {
+        val user = userRepository.findById(userId)
+            .orElseThrow { ApiException(ErrorCode.USER_NOT_FOUND) }
+        user.fcmToken = fcmToken
+        userRepository.save(user)
+    }
+
+    @Transactional
     fun withdrawUser(userId: Long, password: String) {
         val user = userRepository.findById(userId)
             .orElseThrow { ApiException(ErrorCode.USER_NOT_FOUND) }

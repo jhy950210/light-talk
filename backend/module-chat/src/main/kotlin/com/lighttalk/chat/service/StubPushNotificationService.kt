@@ -6,13 +6,12 @@ import org.springframework.stereotype.Service
 
 /**
  * Stub implementation of PushNotificationService that only logs.
- * Enabled by default. Set push.notification.enabled=false to disable,
- * or replace with an FCM implementation when push.notification.provider=fcm.
+ * Used when push.notification.provider is not set to "fcm".
  */
 @Service
 @ConditionalOnProperty(
-    name = ["push.notification.enabled"],
-    havingValue = "true",
+    name = ["push.notification.provider"],
+    havingValue = "stub",
     matchIfMissing = true
 )
 class StubPushNotificationService : PushNotificationService {

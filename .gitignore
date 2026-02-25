@@ -35,6 +35,11 @@ Thumbs.db
 .env.*
 *.log
 
+# Firebase
+*-firebase-adminsdk-*.json
+frontend/ios/Runner/GoogleService-Info.plist
+frontend/android/app/google-services.json
+
 # Flutter desktop platforms (not targeted)
 frontend/linux/
 frontend/macos/

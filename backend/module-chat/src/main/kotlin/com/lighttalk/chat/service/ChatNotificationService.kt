@@ -18,7 +18,8 @@ import org.springframework.stereotype.Service
 @Service
 class ChatNotificationService(
     private val messagingTemplate: SimpMessagingTemplate,
-    private val chatMemberRepository: ChatMemberRepository
+    private val chatMemberRepository: ChatMemberRepository,
+    private val pushNotificationService: PushNotificationService
 ) {
 
     private val log = LoggerFactory.getLogger(javaClass)
@@ -26,6 +27,18 @@ class ChatNotificationService(
     fun notifyNewMessage(message: MessageResponse) {
         val event = ChatMessageEvent(message = message)
         broadcastToRoom(message.chatRoomId, event, excludeUserId = message.senderId)
+
+        // Send FCM push to all active members except the sender
+        val members = chatMemberRepository.findActiveByChatRoomId(message.chatRoomId)
+        members.filter { it.userId != message.senderId }
+            .forEach { member ->
+                pushNotificationService.sendPushNotification(
+                    userId = member.userId,
+                    title = message.senderNickname,
+                    body = message.content
+                )
+            }
+
         log.debug("Message broadcast: chatRoomId={}, messageId={}", message.chatRoomId, message.id)
     }
 

@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
+data class UpdateFcmTokenRequest(val fcmToken: String?)
+
 @RestController
 @RequestMapping("/api/v1/users")
 class UserController(
@@ -43,6 +45,15 @@ class UserController(
         @Valid @RequestBody request: WithdrawalRequest
     ): ResponseEntity<ApiResponse<Nothing>> {
         userService.withdrawUser(userId, request.password)
+        return ResponseEntity.ok(ApiResponse.success())
+    }
+
+    @PutMapping("/me/fcm-token")
+    fun updateFcmToken(
+        @AuthenticationPrincipal userId: Long,
+        @RequestBody request: UpdateFcmTokenRequest
+    ): ResponseEntity<ApiResponse<Nothing>> {
+        userService.updateFcmToken(userId, request.fcmToken)
         return ResponseEntity.ok(ApiResponse.success())
     }
 

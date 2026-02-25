@@ -20,5 +20,8 @@ class User(
     var profileImageUrl: String? = null,
 
     @Column(name = "phone_blind_index", length = 64)
-    val phoneBlindIndex: String? = null
+    val phoneBlindIndex: String? = null,
+
+    @Column(name = "fcm_token", length = 512)
+    var fcmToken: String? = null
 ) : BaseEntity()

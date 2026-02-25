@@ -52,6 +52,9 @@ class ApiConstants {
       '/api/v1/chats/$roomId/members/$userId';
   static String chatLeave(int roomId) => '/api/v1/chats/$roomId/leave';
 
+  // ── FCM Token ────────────────────────────────────────────────
+  static const String fcmToken = '/api/v1/users/me/fcm-token';
+
   // ── Upload ────────────────────────────────────────────────────
   static const String presignUpload = '/api/v1/upload/presign';
 

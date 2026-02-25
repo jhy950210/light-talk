@@ -69,6 +69,13 @@ storage:
     secret-key: ${R2_SECRET_KEY:}
     public-url: ${R2_PUBLIC_URL:https://media.lighttalk.app}
 
+push:
+  notification:
+    provider: ${PUSH_PROVIDER:stub}
+
+firebase:
+  credentials-json: ${FIREBASE_CREDENTIALS_JSON:}
+
 management:
   endpoints:
     web:

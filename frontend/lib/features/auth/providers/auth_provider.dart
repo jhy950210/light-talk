@@ -1,6 +1,8 @@
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/constants/api_constants.dart';
+import '../../../core/network/dio_client.dart';
 import '../../../core/providers/providers.dart';
 import '../../../core/utils/error_utils.dart';
 import '../data/auth_repository.dart';
@@ -74,8 +76,10 @@ class AuthState {
 class AuthNotifier extends StateNotifier<AuthState> {
   final AuthRepository _repository;
   final SharedPreferences _prefs;
+  final DioClient _dioClient;
 
-  AuthNotifier(this._repository, this._prefs) : super(const AuthState()) {
+  AuthNotifier(this._repository, this._prefs, this._dioClient)
+      : super(const AuthState()) {
     _loadFromStorage();
   }
 
@@ -92,6 +96,33 @@ class AuthNotifier extends StateNotifier<AuthState> {
         nickname: nickname,
         tag: tag,
       );
+      _registerFcmToken();
+    }
+  }
+
+  Future<void> _registerFcmToken() async {
+    try {
+      final messaging = FirebaseMessaging.instance;
+      await messaging.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+      final fcmToken = await messaging.getToken();
+      if (fcmToken != null) {
+        await _dioClient.dio.put(
+          ApiConstants.fcmToken,
+          data: {'fcmToken': fcmToken},
+        );
+      }
+      messaging.onTokenRefresh.listen((newToken) {
+        _dioClient.dio.put(
+          ApiConstants.fcmToken,
+          data: {'fcmToken': newToken},
+        );
+      });
+    } catch (e) {
+      // FCM registration failure should not block the user
     }
   }
 
@@ -110,6 +141,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         nickname: response.nickname,
         tag: response.tag,
       );
+      _registerFcmToken();
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
@@ -133,6 +165,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         nickname: response.nickname,
         tag: response.tag,
       );
+      _registerFcmToken();
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
@@ -212,6 +245,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         nickname: response.nickname,
         tag: response.tag,
       );
+      _registerFcmToken();
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
@@ -233,6 +267,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         nickname: response.nickname,
         tag: response.tag,
       );
+      _registerFcmToken();
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
@@ -315,5 +350,6 @@ final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   return AuthNotifier(
     ref.watch(authRepositoryProvider),
     ref.watch(sharedPreferencesProvider),
+    ref.watch(dioClientProvider),
   );
 });
