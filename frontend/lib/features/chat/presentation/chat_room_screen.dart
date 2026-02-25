@@ -52,10 +52,18 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
 
   @override
   void dispose() {
+    _cleanup();
     _messageController.dispose();
     _scrollController.dispose();
     _focusNode.dispose();
     super.dispose();
+  }
+
+  void _cleanup() {
+    final notifier = ref.read(messagesProvider(widget.roomId).notifier);
+    notifier.unsubscribeFromRoom();
+    notifier.markAsRead(); // fire-and-forget
+    ref.read(chatRoomsProvider.notifier).loadRooms();
   }
 
   void _onScroll() {
@@ -300,33 +308,11 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
         ? (roomData.name.isNotEmpty ? roomData.name : '채팅')
         : '채팅';
 
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, _) async {
-        if (didPop) return;
-        ref
-            .read(messagesProvider(widget.roomId).notifier)
-            .unsubscribeFromRoom();
-        await ref
-            .read(messagesProvider(widget.roomId).notifier)
-            .markAsRead();
-        ref.read(chatRoomsProvider.notifier).loadRooms();
-        if (context.mounted) context.pop();
-      },
-      child: Scaffold(
+    return Scaffold(
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_rounded),
-          onPressed: () async {
-            ref
-                .read(messagesProvider(widget.roomId).notifier)
-                .unsubscribeFromRoom();
-            await ref
-                .read(messagesProvider(widget.roomId).notifier)
-                .markAsRead();
-            ref.read(chatRoomsProvider.notifier).loadRooms();
-            if (context.mounted) context.pop();
-          },
+          onPressed: () => context.pop(),
         ),
         title: Column(
           children: [
@@ -400,7 +386,6 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
           _buildInputBar(context, msgState),
         ],
       ),
-    ),
     );
   }
 

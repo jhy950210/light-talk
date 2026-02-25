@@ -271,14 +271,8 @@ class MessagesNotifier extends StateNotifier<MessagesState> {
         return;
       }
 
-      // Fallback: try to parse directly as a message
-      final message = MessageModel.fromJson(data);
-      final existing = state.messages.any((m) => m.id == message.id);
-      if (!existing) {
-        state = state.copyWith(
-          messages: [message, ...state.messages],
-        );
-      }
+      // Ignore other event types (READ_RECEIPT, MEMBER_JOINED, etc.)
+      print('[Chat] Ignoring event type: $eventType');
     } catch (e) {
       print('[Chat] Failed to parse STOMP message: $e');
     }
