@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -44,10 +45,18 @@ class ChatRoomsNotifier extends StateNotifier<ChatRoomsState> {
   final ChatRepository _repository;
   final StompService _stompService;
   final SharedPreferences _prefs;
+  StreamSubscription<bool>? _connectionSub;
 
   ChatRoomsNotifier(this._repository, this._stompService, this._prefs)
       : super(const ChatRoomsState()) {
     _subscribeToUserQueue();
+    // Listen for STOMP (re)connections to re-subscribe
+    _connectionSub = _stompService.connectionStream.listen((connected) {
+      if (connected) {
+        _subscribeToUserQueue();
+        loadRooms();
+      }
+    });
   }
 
   void _subscribeToUserQueue() {
@@ -145,6 +154,12 @@ class ChatRoomsNotifier extends StateNotifier<ChatRoomsState> {
 
   void clearError() {
     state = state.copyWith(errorMessage: null);
+  }
+
+  @override
+  void dispose() {
+    _connectionSub?.cancel();
+    super.dispose();
   }
 }
 

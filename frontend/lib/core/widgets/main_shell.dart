@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/providers.dart';
 import '../theme/app_theme.dart';
+import '../../features/chat/providers/chat_provider.dart';
 import '../../features/friends/providers/friends_provider.dart';
 
 class MainShell extends ConsumerStatefulWidget {
@@ -33,6 +34,8 @@ class _MainShellState extends ConsumerState<MainShell> {
     });
   }
 
+  int _previousIndex = 0;
+
   int _currentIndex(BuildContext context) {
     final location = GoRouterState.of(context).matchedLocation;
     if (location.startsWith('/chats')) return 1;
@@ -44,6 +47,17 @@ class _MainShellState extends ConsumerState<MainShell> {
   @override
   Widget build(BuildContext context) {
     final currentIndex = _currentIndex(context);
+
+    // Refresh data when switching tabs
+    if (currentIndex != _previousIndex) {
+      _previousIndex = currentIndex;
+      if (currentIndex == 0) {
+        ref.read(friendsProvider.notifier).loadFriends();
+      } else if (currentIndex == 1) {
+        ref.read(chatRoomsProvider.notifier).loadRooms();
+      }
+    }
+
     final requestsState = ref.watch(friendRequestsProvider);
     final pendingCount = requestsState.requests.length;
 
