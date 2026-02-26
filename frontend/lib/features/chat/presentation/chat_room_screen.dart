@@ -309,14 +309,20 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
         : '채팅';
 
     return PopScope(
-      onPopInvokedWithResult: (didPop, _) {
-        if (didPop) _onLeaveRoom();
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) return;
+        await _onLeaveRoom();
+        if (context.mounted) context.pop();
       },
       child: Scaffold(
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_rounded),
-          onPressed: () => context.pop(),
+          onPressed: () async {
+            await _onLeaveRoom();
+            if (context.mounted) context.pop();
+          },
         ),
         title: Column(
           children: [
