@@ -11,6 +11,13 @@
 	<key>uploadBitcode</key>
 	<false/>
 	<key>signingStyle</key>
-	<string>automatic</string>
+	<string>manual</string>
+	<key>provisioningProfiles</key>
+	<dict>
+		<key>com.lighttalk.lightTalk</key>
+		<string>com.lighttalk.lightTalk AppStore</string>
+	</dict>
+	<key>signingCertificate</key>
+	<string>Apple Distribution</string>
 </dict>
 </plist>

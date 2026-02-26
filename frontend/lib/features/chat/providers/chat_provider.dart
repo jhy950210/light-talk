@@ -283,7 +283,6 @@ class MessagesNotifier extends StateNotifier<MessagesState> {
           state = state.copyWith(
             messages: [message, ...state.messages],
           );
-          markAsRead();
         }
         return;
       }

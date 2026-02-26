@@ -52,19 +52,18 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
 
   @override
   void dispose() {
-    _cleanup();
+    final notifier = ref.read(messagesProvider(widget.roomId).notifier);
+    notifier.unsubscribeFromRoom();
     _messageController.dispose();
     _scrollController.dispose();
     _focusNode.dispose();
     super.dispose();
   }
 
-  void _cleanup() {
+  Future<void> _onLeaveRoom() async {
     final notifier = ref.read(messagesProvider(widget.roomId).notifier);
-    notifier.unsubscribeFromRoom();
-    notifier.markAsRead().then((_) {
-      ref.read(chatRoomsProvider.notifier).loadRooms();
-    });
+    await notifier.markAsRead();
+    ref.read(chatRoomsProvider.notifier).loadRooms();
   }
 
   void _onScroll() {
@@ -309,7 +308,11 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
         ? (roomData.name.isNotEmpty ? roomData.name : '채팅')
         : '채팅';
 
-    return Scaffold(
+    return PopScope(
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) _onLeaveRoom();
+      },
+      child: Scaffold(
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_rounded),
@@ -387,6 +390,7 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
           _buildInputBar(context, msgState),
         ],
       ),
+    ),
     );
   }
 

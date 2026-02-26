@@ -2,6 +2,9 @@
     <!-- 인터넷 -->
     <uses-permission android:name="android.permission.INTERNET"/>
 
+    <!-- 푸시 알림 (Android 13+) -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+
     <!-- 카메라 -->
     <uses-permission android:name="android.permission.CAMERA"/>
     <uses-feature android:name="android.hardware.camera" android:required="false"/>
