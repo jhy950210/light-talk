@@ -108,10 +108,12 @@ class _LightTalkAppState extends ConsumerState<LightTalkApp>
     // Create Android notification channel
     if (Platform.isAndroid) {
       const channel = AndroidNotificationChannel(
-        'chat_messages',
+        'chat_messages_v2',
         'Chat Messages',
         description: 'Notifications for new chat messages',
         importance: Importance.high,
+        enableVibration: true,
+        playSound: true,
       );
       await _localNotifications
           .resolvePlatformSpecificImplementation<
@@ -160,9 +162,9 @@ class _LightTalkAppState extends ConsumerState<LightTalkApp>
     }
   }
 
-  void _handleForegroundMessage(RemoteMessage message) {
+  Future<void> _handleForegroundMessage(RemoteMessage message) async {
     debugPrint('[FCM] Foreground message received: ${message.data}');
-    debugPrint('[FCM] notification payload: title=${message.notification?.title}, body=${message.notification?.body}');
+    debugPrint('[FCM] notification: title=${message.notification?.title}, body=${message.notification?.body}');
     debugPrint('[FCM] notificationsReady=$_notificationsReady');
 
     if (!_notificationsReady) {
@@ -193,25 +195,32 @@ class _LightTalkAppState extends ConsumerState<LightTalkApp>
 
     debugPrint('[FCM] Showing local notification: $title - $body');
 
-    _localNotifications.show(
-      message.hashCode,
-      title,
-      body,
-      const NotificationDetails(
-        android: AndroidNotificationDetails(
-          'chat_messages',
-          'Chat Messages',
-          importance: Importance.high,
-          priority: Priority.high,
+    try {
+      await _localNotifications.show(
+        message.hashCode,
+        title,
+        body,
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'chat_messages_v2',
+            'Chat Messages',
+            importance: Importance.high,
+            priority: Priority.high,
+            enableVibration: true,
+            playSound: true,
+          ),
+          iOS: DarwinNotificationDetails(
+            presentAlert: true,
+            presentBadge: true,
+            presentSound: true,
+          ),
         ),
-        iOS: DarwinNotificationDetails(
-          presentAlert: true,
-          presentBadge: true,
-          presentSound: true,
-        ),
-      ),
-      payload: chatRoomId,
-    );
+        payload: chatRoomId,
+      );
+      debugPrint('[FCM] Local notification shown successfully');
+    } catch (e) {
+      debugPrint('[FCM] Failed to show local notification: $e');
+    }
   }
 
   void _handleNotificationTap(RemoteMessage message) {

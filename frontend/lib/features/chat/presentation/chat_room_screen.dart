@@ -40,6 +40,7 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
       '';
 
   int _lastReadMessageCount = 0;
+  int? _lastSeenMessageId;
   ProviderSubscription? _messagesSub;
 
   @override
@@ -51,12 +52,14 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
       final notifier = ref.read(messagesProvider(widget.roomId).notifier);
       notifier.subscribeToRoom();
       notifier.loadMessages().then((_) {
-        // Mark as read after loading (user just entered the room)
+        final msgs = ref.read(messagesProvider(widget.roomId)).messages;
+        if (msgs.isNotEmpty) _lastSeenMessageId = msgs.first.id;
         notifier.markAsRead();
       });
       // Listen for new messages to mark them as read while screen is visible
       _messagesSub = ref.listenManual(messagesProvider(widget.roomId), (prev, next) {
         if (next.messages.length > _lastReadMessageCount && _lastReadMessageCount > 0) {
+          if (next.messages.isNotEmpty) _lastSeenMessageId = next.messages.first.id;
           ref.read(messagesProvider(widget.roomId).notifier).markAsRead();
         }
         _lastReadMessageCount = next.messages.length;
@@ -74,11 +77,17 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
     // Capture references before super.dispose()
     final msgNotifier = ref.read(messagesProvider(widget.roomId).notifier);
     final roomsNotifier = ref.read(chatRoomsProvider.notifier);
+    final savedMessageId = _lastSeenMessageId;
     msgNotifier.unsubscribeFromRoom();
-    // Do NOT call markAsRead here — initState and listenManual already handled it.
-    // Calling markAsRead in dispose risks marking unseen messages as read
-    // (STOMP may deliver new messages between back-tap and dispose execution).
-    roomsNotifier.loadRooms();
+    // Use saved message ID (not state.messages.first.id) to avoid marking
+    // messages that arrived after user started navigating away.
+    if (savedMessageId != null) {
+      msgNotifier.markAsRead(messageId: savedMessageId).then((_) {
+        roomsNotifier.loadRooms();
+      }).catchError((_) {});
+    } else {
+      roomsNotifier.loadRooms();
+    }
     _messageController.dispose();
     _scrollController.dispose();
     _focusNode.dispose();

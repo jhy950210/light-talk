@@ -210,12 +210,15 @@ class MessagesState {
 class MessagesNotifier extends StateNotifier<MessagesState> {
   final ChatRepository _repository;
   final StompService _stompService;
+  final SharedPreferences _prefs;
   final int roomId;
   StompUnsubscribe? _unsubscribe;
   StreamSubscription<bool>? _connectionSub;
   bool _isSubscribed = false;
 
-  MessagesNotifier(this._repository, this._stompService, this.roomId)
+  int get _currentUserId => _prefs.getInt(ApiConstants.userIdKey) ?? 0;
+
+  MessagesNotifier(this._repository, this._stompService, this._prefs, this.roomId)
       : super(const MessagesState());
 
   Future<void> loadMessages() async {
@@ -304,6 +307,10 @@ class MessagesNotifier extends StateNotifier<MessagesState> {
 
       if (eventType == 'READ_RECEIPT') {
         final messageId = data['messageId'] as int;
+        final readByUserId = data['userId'] as int?;
+        // Only process read receipts from OTHER users.
+        // Our own read receipt doesn't mean others have read our messages.
+        if (readByUserId == _currentUserId) return;
         _markMessagesAsRead(messageId);
         return;
       }
@@ -406,10 +413,11 @@ class MessagesNotifier extends StateNotifier<MessagesState> {
     _stompService.unsubscribe(ApiConstants.topicChat(roomId));
   }
 
-  Future<void> markAsRead() async {
-    if (state.messages.isNotEmpty) {
+  Future<void> markAsRead({int? messageId}) async {
+    final id = messageId ?? (state.messages.isNotEmpty ? state.messages.first.id : null);
+    if (id != null) {
       try {
-        await _repository.markAsRead(roomId, state.messages.first.id);
+        await _repository.markAsRead(roomId, id);
       } catch (_) {}
     }
   }
@@ -444,6 +452,7 @@ final messagesProvider = StateNotifierProvider.family<MessagesNotifier,
   return MessagesNotifier(
     ref.watch(chatRepositoryProvider),
     ref.watch(stompServiceProvider),
+    ref.watch(sharedPreferencesProvider),
     roomId,
   );
 });
