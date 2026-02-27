@@ -18,7 +18,7 @@ class StubPushNotificationService : PushNotificationService {
 
     private val log = LoggerFactory.getLogger(javaClass)
 
-    override fun sendPushNotification(userId: Long, title: String, body: String) {
+    override fun sendPushNotification(userId: Long, title: String, body: String, badgeCount: Int) {
         log.info(
             "[STUB PUSH] Sending push notification to userId={}, title='{}', body='{}'",
             userId, title, body

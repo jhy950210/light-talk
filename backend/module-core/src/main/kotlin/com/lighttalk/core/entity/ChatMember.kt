@@ -17,8 +17,8 @@ class ChatMember(
     @Column(name = "user_id", nullable = false)
     val userId: Long,
 
-    @Column(name = "joined_at", nullable = false, updatable = false)
-    val joinedAt: LocalDateTime = LocalDateTime.now(),
+    @Column(name = "joined_at", nullable = false)
+    var joinedAt: LocalDateTime = LocalDateTime.now(),
 
     @Column(name = "last_read_message_id")
     var lastReadMessageId: Long? = null,

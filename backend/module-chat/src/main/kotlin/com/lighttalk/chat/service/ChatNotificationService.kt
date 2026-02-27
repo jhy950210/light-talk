@@ -10,15 +10,18 @@ import com.lighttalk.chat.dto.MessageResponse
 import com.lighttalk.chat.dto.ReadReceiptEvent
 import com.lighttalk.chat.dto.RoleChangedEvent
 import com.lighttalk.chat.repository.ChatMemberRepository
+import com.lighttalk.chat.repository.MessageRepository
 import com.lighttalk.core.entity.ChatMemberRole
 import org.slf4j.LoggerFactory
 import org.springframework.messaging.simp.SimpMessagingTemplate
+import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Service
 
 @Service
 class ChatNotificationService(
     private val messagingTemplate: SimpMessagingTemplate,
     private val chatMemberRepository: ChatMemberRepository,
+    private val messageRepository: MessageRepository,
     private val pushNotificationService: PushNotificationService
 ) {
 
@@ -27,19 +30,33 @@ class ChatNotificationService(
     fun notifyNewMessage(message: MessageResponse) {
         val event = ChatMessageEvent(message = message)
         broadcastToRoom(message.chatRoomId, event, excludeUserId = message.senderId)
+        sendPushNotifications(message)
+        log.debug("Message broadcast: chatRoomId={}, messageId={}", message.chatRoomId, message.id)
+    }
 
-        // Send FCM push to all active members except the sender
-        val members = chatMemberRepository.findActiveByChatRoomId(message.chatRoomId)
-        members.filter { it.userId != message.senderId }
-            .forEach { member ->
+    @Async
+    fun sendPushNotifications(message: MessageResponse) {
+        try {
+            val members = chatMemberRepository.findActiveByChatRoomId(message.chatRoomId)
+            val recipients = members.filter { it.userId != message.senderId }
+            if (recipients.isEmpty()) return
+
+            // Batch: calculate unread counts for all recipients at once
+            val unreadCounts = recipients.associate { member ->
+                member.userId to messageRepository.countTotalUnreadByUserId(member.userId).toInt()
+            }
+
+            recipients.forEach { member ->
                 pushNotificationService.sendPushNotification(
                     userId = member.userId,
                     title = message.senderNickname,
-                    body = message.content
+                    body = message.content,
+                    badgeCount = unreadCounts[member.userId] ?: 1
                 )
             }
-
-        log.debug("Message broadcast: chatRoomId={}, messageId={}", message.chatRoomId, message.id)
+        } catch (e: Exception) {
+            log.warn("Failed to send push notifications for messageId={}: {}", message.id, e.message)
+        }
     }
 
     fun notifyMessageDeleted(chatRoomId: Long, messageId: Long) {

@@ -54,6 +54,8 @@ class ChatRoomService(
             inactiveMembers.forEach { member ->
                 log.info("Reactivating member: userId={}, leftAt={}", member.userId, member.leftAt)
                 member.leftAt = null
+                member.joinedAt = java.time.LocalDateTime.now()
+                member.lastReadMessageId = null
                 chatMemberRepository.save(member)
             }
             return getChatRoom(existingRoomId, userId)
@@ -525,12 +527,11 @@ class ChatRoomService(
         val lastMessages = messageRepository.findLastMessagesByRoomIds(roomIds)
         val lastMessageByRoomId = lastMessages.associateBy { it.chatRoomId }
 
-        // Batch 5: Compute unread counts (N individual queries - unavoidable due to per-user lastReadMessageId)
-        // But this is still better than N*5 total queries
-        val unreadCounts = myMemberships.associate { membership ->
-            val lastReadId = membership.lastReadMessageId ?: 0L
-            membership.chatRoomId to messageRepository.countUnreadMessages(membership.chatRoomId, lastReadId)
-        }
+        // Batch 5: Compute unread counts (single query for all rooms)
+        val unreadCounts = messageRepository.countUnreadByUserGroupedByRoom(userId)
+            .associate { row ->
+                (row[0] as Number).toLong() to (row[1] as Number).toLong()
+            }
 
         return roomIds.mapNotNull { roomId ->
             val chatRoom = chatRoomMap[roomId] ?: return@mapNotNull null
@@ -611,9 +612,9 @@ class ChatRoomService(
         }
 
         val unreadCount = if (currentMembership.lastReadMessageId != null) {
-            messageRepository.countUnreadMessages(chatRoom.id, currentMembership.lastReadMessageId!!)
+            messageRepository.countUnreadMessages(chatRoom.id, currentMembership.lastReadMessageId!!, currentMembership.joinedAt)
         } else {
-            messageRepository.countUnreadMessages(chatRoom.id, 0L)
+            messageRepository.countUnreadMessages(chatRoom.id, 0L, currentMembership.joinedAt)
         }
 
         return ChatRoomResponse(

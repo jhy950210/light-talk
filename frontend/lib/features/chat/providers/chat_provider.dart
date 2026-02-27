@@ -212,6 +212,8 @@ class MessagesNotifier extends StateNotifier<MessagesState> {
   final StompService _stompService;
   final int roomId;
   StompUnsubscribe? _unsubscribe;
+  StreamSubscription<bool>? _connectionSub;
+  bool _isSubscribed = false;
 
   MessagesNotifier(this._repository, this._stompService, this.roomId)
       : super(const MessagesState());
@@ -254,12 +256,25 @@ class MessagesNotifier extends StateNotifier<MessagesState> {
   }
 
   void subscribeToRoom() {
+    _isSubscribed = true;
     if (_stompService.isConnected) {
       _unsubscribe = _stompService.subscribe(
         ApiConstants.topicChat(roomId),
         _onMessage,
       );
     }
+    // Re-subscribe on STOMP reconnection
+    _connectionSub?.cancel();
+    _connectionSub = _stompService.connectionStream.listen((connected) {
+      if (connected && _isSubscribed) {
+        _unsubscribe = _stompService.subscribe(
+          ApiConstants.topicChat(roomId),
+          _onMessage,
+        );
+        // Reload messages to catch any missed during disconnect
+        loadMessages();
+      }
+    });
   }
 
   void _onMessage(StompFrame frame) {
@@ -283,6 +298,8 @@ class MessagesNotifier extends StateNotifier<MessagesState> {
           state = state.copyWith(
             messages: [message, ...state.messages],
           );
+          // Mark as read since user is viewing this room
+          markAsRead();
         }
         return;
       }
@@ -383,6 +400,9 @@ class MessagesNotifier extends StateNotifier<MessagesState> {
   }
 
   void unsubscribeFromRoom() {
+    _isSubscribed = false;
+    _connectionSub?.cancel();
+    _connectionSub = null;
     _unsubscribe?.call();
     _unsubscribe = null;
     _stompService.unsubscribe(ApiConstants.topicChat(roomId));

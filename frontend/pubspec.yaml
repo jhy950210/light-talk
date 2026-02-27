@@ -1,7 +1,7 @@
 name: light_talk
 description: A lightweight real-time chat application.
 publish_to: 'none'
-version: 1.0.0+33
+version: 1.0.0+34
 
 environment:
   sdk: '>=3.2.0 <4.0.0'
@@ -36,6 +36,9 @@ dependencies:
   # Firebase
   firebase_core: ^3.12.1
   firebase_messaging: ^15.2.4
+
+  # Badge
+  flutter_app_badger: ^1.5.0
 
   # Media
   image_picker: ^1.0.7

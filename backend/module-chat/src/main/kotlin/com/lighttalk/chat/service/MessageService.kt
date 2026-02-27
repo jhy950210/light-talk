@@ -58,8 +58,11 @@ class MessageService(
         }
 
         // Validate user is an active member
-        chatMemberRepository.findActiveByChatRoomIdAndUserId(chatRoomId, userId)
+        val membership = chatMemberRepository.findActiveByChatRoomIdAndUserId(chatRoomId, userId)
             ?: throw ApiException(ErrorCode.NOT_CHAT_MEMBER)
+
+        // Only show messages since user's joinedAt (hides old messages after re-joining)
+        val since = membership.joinedAt
 
         // Get all active members' lastReadMessageId to determine read status
         val members = chatMemberRepository.findActiveByChatRoomId(chatRoomId)
@@ -70,9 +73,9 @@ class MessageService(
         val clampedSize = size.coerceIn(1, 100)
         val pageable = PageRequest.of(0, clampedSize + 1)
         val messages = if (cursor != null) {
-            messageRepository.findByChatRoomIdWithCursor(chatRoomId, cursor, pageable)
+            messageRepository.findByChatRoomIdWithCursor(chatRoomId, cursor, since, pageable)
         } else {
-            messageRepository.findByChatRoomIdLatest(chatRoomId, pageable)
+            messageRepository.findByChatRoomIdLatest(chatRoomId, since, pageable)
         }
 
         val hasMore = messages.size > clampedSize

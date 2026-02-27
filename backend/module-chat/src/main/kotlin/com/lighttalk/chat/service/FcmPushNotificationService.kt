@@ -26,7 +26,7 @@ class FcmPushNotificationService(
 
     private val log = LoggerFactory.getLogger(javaClass)
 
-    override fun sendPushNotification(userId: Long, title: String, body: String) {
+    override fun sendPushNotification(userId: Long, title: String, body: String, badgeCount: Int) {
         val fcmToken = userFcmTokenResolver.getFcmToken(userId)
         if (fcmToken == null) {
             log.debug("No FCM token for userId={}, skipping push", userId)
@@ -47,7 +47,7 @@ class FcmPushNotificationService(
                         .setAps(
                             Aps.builder()
                                 .setSound("default")
-                                .setBadge(1)
+                                .setBadge(badgeCount)
                                 .build()
                         )
                         .build()
