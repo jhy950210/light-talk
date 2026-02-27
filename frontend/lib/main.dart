@@ -73,13 +73,22 @@ class _LightTalkAppState extends ConsumerState<LightTalkApp>
     with WidgetsBindingObserver {
   final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
+  bool _notificationsReady = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     FlutterAppBadger.removeBadge();
-    _initLocalNotifications();
+    _initAndSetupNotifications();
+  }
+
+  /// Initialize local notifications FIRST, then set up FCM handlers.
+  /// This ensures _localNotifications.show() works when the first message arrives.
+  Future<void> _initAndSetupNotifications() async {
+    await _initLocalNotifications();
+    _notificationsReady = true;
+    debugPrint('[FCM] Local notifications initialized, setting up handlers');
     _setupNotificationHandlers();
   }
 
@@ -108,6 +117,12 @@ class _LightTalkAppState extends ConsumerState<LightTalkApp>
           .resolvePlatformSpecificImplementation<
               AndroidFlutterLocalNotificationsPlugin>()
           ?.createNotificationChannel(channel);
+
+      // Request notification permission (Android 13+)
+      await _localNotifications
+          .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>()
+          ?.requestNotificationsPermission();
     }
   }
 
@@ -147,9 +162,17 @@ class _LightTalkAppState extends ConsumerState<LightTalkApp>
 
   void _handleForegroundMessage(RemoteMessage message) {
     debugPrint('[FCM] Foreground message received: ${message.data}');
+    debugPrint('[FCM] notification payload: title=${message.notification?.title}, body=${message.notification?.body}');
+    debugPrint('[FCM] notificationsReady=$_notificationsReady');
+
+    if (!_notificationsReady) {
+      debugPrint('[FCM] Local notifications not initialized yet, skipping');
+      return;
+    }
 
     final chatRoomId = message.data['chatRoomId'];
     final activeRoom = ref.read(activeChatRoomProvider);
+    debugPrint('[FCM] chatRoomId=$chatRoomId, activeRoom=$activeRoom');
 
     // Don't show notification if user is viewing this chat room
     if (chatRoomId != null &&

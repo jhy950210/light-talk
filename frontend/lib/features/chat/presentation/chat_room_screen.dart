@@ -40,6 +40,7 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
       '';
 
   int _lastReadMessageCount = 0;
+  ProviderSubscription? _messagesSub;
 
   @override
   void initState() {
@@ -54,7 +55,7 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
         notifier.markAsRead();
       });
       // Listen for new messages to mark them as read while screen is visible
-      ref.listenManual(messagesProvider(widget.roomId), (prev, next) {
+      _messagesSub = ref.listenManual(messagesProvider(widget.roomId), (prev, next) {
         if (next.messages.length > _lastReadMessageCount && _lastReadMessageCount > 0) {
           ref.read(messagesProvider(widget.roomId).notifier).markAsRead();
         }
@@ -65,16 +66,19 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
 
   @override
   void dispose() {
+    // Cancel message listener FIRST to prevent further markAsRead calls
+    _messagesSub?.close();
+    _messagesSub = null;
     // Clear active room tracking
     ref.read(activeChatRoomProvider.notifier).state = null;
     // Capture references before super.dispose()
     final msgNotifier = ref.read(messagesProvider(widget.roomId).notifier);
     final roomsNotifier = ref.read(chatRoomsProvider.notifier);
     msgNotifier.unsubscribeFromRoom();
-    // Fire-and-forget: markAsRead then refresh rooms
-    msgNotifier.markAsRead().then((_) {
-      roomsNotifier.loadRooms();
-    }).catchError((_) {});
+    // Do NOT call markAsRead here — initState and listenManual already handled it.
+    // Calling markAsRead in dispose risks marking unseen messages as read
+    // (STOMP may deliver new messages between back-tap and dispose execution).
+    roomsNotifier.loadRooms();
     _messageController.dispose();
     _scrollController.dispose();
     _focusNode.dispose();
