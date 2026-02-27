@@ -17,6 +17,14 @@ subprojects {
 }
 subprojects {
     project.evaluationDependsOn(":app")
+    afterEvaluate {
+        if (project.plugins.hasPlugin("com.android.library")) {
+            val android = project.extensions.getByType(com.android.build.gradle.LibraryExtension::class.java)
+            if (android.namespace == null || android.namespace!!.isEmpty()) {
+                android.namespace = project.group.toString().ifEmpty { "com.flutter.${project.name.replace("-", "_")}" }
+            }
+        }
+    }
 }
 
 tasks.register<Delete>("clean") {
