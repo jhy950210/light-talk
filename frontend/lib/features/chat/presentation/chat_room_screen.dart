@@ -44,14 +44,17 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
     super.initState();
     _scrollController.addListener(_onScroll);
     Future.microtask(() {
+      ref.read(activeChatRoomProvider.notifier).state = widget.roomId;
       final notifier = ref.read(messagesProvider(widget.roomId).notifier);
-      notifier.loadMessages();
       notifier.subscribeToRoom();
+      notifier.loadMessages();
     });
   }
 
   @override
   void dispose() {
+    // Clear active room tracking
+    ref.read(activeChatRoomProvider.notifier).state = null;
     // Capture references before super.dispose()
     final msgNotifier = ref.read(messagesProvider(widget.roomId).notifier);
     final roomsNotifier = ref.read(chatRoomsProvider.notifier);

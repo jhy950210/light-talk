@@ -39,6 +39,14 @@ Upload existing IPA to TestFlight
 
 Upload metadata to App Store Connect
 
+### ios submit_review
+
+```sh
+[bundle exec] fastlane ios submit_review
+```
+
+Submit latest build for App Store review
+
 ----
 
 This README.md is auto-generated and will be re-generated every time [_fastlane_](https://fastlane.tools) is run.

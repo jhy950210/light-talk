@@ -278,6 +278,7 @@ class MessagesNotifier extends StateNotifier<MessagesState> {
   }
 
   void _onMessage(StompFrame frame) {
+    if (!_isSubscribed) return;
     if (frame.body == null) return;
     try {
       final data = jsonDecode(frame.body!) as Map<String, dynamic>;
@@ -449,6 +450,9 @@ final messagesProvider = StateNotifierProvider.family<MessagesNotifier,
     roomId,
   );
 });
+
+/// Tracks which chat room the user is currently viewing (null = not in any room)
+final activeChatRoomProvider = StateProvider<int?>((ref) => null);
 
 // ═══════════════════════════════════════════════════════════════
 // Chat Members Provider (for group management)
