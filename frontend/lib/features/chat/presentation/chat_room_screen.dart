@@ -39,6 +39,8 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
           .getString(ApiConstants.userNicknameKey) ??
       '';
 
+  int _lastReadMessageCount = 0;
+
   @override
   void initState() {
     super.initState();
@@ -47,7 +49,17 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
       ref.read(activeChatRoomProvider.notifier).state = widget.roomId;
       final notifier = ref.read(messagesProvider(widget.roomId).notifier);
       notifier.subscribeToRoom();
-      notifier.loadMessages();
+      notifier.loadMessages().then((_) {
+        // Mark as read after loading (user just entered the room)
+        notifier.markAsRead();
+      });
+      // Listen for new messages to mark them as read while screen is visible
+      ref.listenManual(messagesProvider(widget.roomId), (prev, next) {
+        if (next.messages.length > _lastReadMessageCount && _lastReadMessageCount > 0) {
+          ref.read(messagesProvider(widget.roomId).notifier).markAsRead();
+        }
+        _lastReadMessageCount = next.messages.length;
+      });
     });
   }
 

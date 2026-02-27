@@ -124,6 +124,13 @@ class _LightTalkAppState extends ConsumerState<LightTalkApp>
   }
 
   void _setupNotificationHandlers() {
+    // Disable iOS automatic foreground display — we handle it ourselves
+    FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
+      alert: false,
+      badge: false,
+      sound: false,
+    );
+
     // Handle foreground messages — show local notification unless viewing the same room
     FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
 
@@ -139,6 +146,8 @@ class _LightTalkAppState extends ConsumerState<LightTalkApp>
   }
 
   void _handleForegroundMessage(RemoteMessage message) {
+    debugPrint('[FCM] Foreground message received: ${message.data}');
+
     final chatRoomId = message.data['chatRoomId'];
     final activeRoom = ref.read(activeChatRoomProvider);
 
@@ -146,16 +155,25 @@ class _LightTalkAppState extends ConsumerState<LightTalkApp>
     if (chatRoomId != null &&
         activeRoom != null &&
         chatRoomId == activeRoom.toString()) {
+      debugPrint('[FCM] Suppressed: user is viewing room $chatRoomId');
       return;
     }
 
-    final notification = message.notification;
-    if (notification == null) return;
+    // Extract notification content (try notification payload, fallback to data)
+    final title = message.notification?.title ?? message.data['title'] ?? '';
+    final body = message.notification?.body ?? message.data['body'] ?? '';
+
+    if (title.isEmpty && body.isEmpty) {
+      debugPrint('[FCM] No title/body, skipping display');
+      return;
+    }
+
+    debugPrint('[FCM] Showing local notification: $title - $body');
 
     _localNotifications.show(
       message.hashCode,
-      notification.title,
-      notification.body,
+      title,
+      body,
       const NotificationDetails(
         android: AndroidNotificationDetails(
           'chat_messages',

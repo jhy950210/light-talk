@@ -227,7 +227,6 @@ class MessagesNotifier extends StateNotifier<MessagesState> {
         isLoading: false,
         hasMore: page.hasMore,
       );
-      markAsRead();
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
@@ -299,8 +298,6 @@ class MessagesNotifier extends StateNotifier<MessagesState> {
           state = state.copyWith(
             messages: [message, ...state.messages],
           );
-          // Mark as read since user is viewing this room
-          markAsRead();
         }
         return;
       }
