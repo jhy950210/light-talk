@@ -51,7 +51,8 @@ class ChatNotificationService(
                     userId = member.userId,
                     title = message.senderNickname,
                     body = message.content,
-                    badgeCount = unreadCounts[member.userId] ?: 1
+                    badgeCount = unreadCounts[member.userId] ?: 1,
+                    chatRoomId = message.chatRoomId
                 )
             }
         } catch (e: Exception) {

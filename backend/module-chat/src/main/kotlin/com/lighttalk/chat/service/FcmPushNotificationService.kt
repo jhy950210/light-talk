@@ -26,7 +26,7 @@ class FcmPushNotificationService(
 
     private val log = LoggerFactory.getLogger(javaClass)
 
-    override fun sendPushNotification(userId: Long, title: String, body: String, badgeCount: Int) {
+    override fun sendPushNotification(userId: Long, title: String, body: String, badgeCount: Int, chatRoomId: Long?) {
         val fcmToken = userFcmTokenResolver.getFcmToken(userId)
         if (fcmToken == null) {
             log.debug("No FCM token for userId={}, skipping push", userId)
@@ -65,6 +65,7 @@ class FcmPushNotificationService(
                 )
                 .putData("type", "chat_message")
                 .putData("userId", userId.toString())
+                .apply { if (chatRoomId != null) putData("chatRoomId", chatRoomId.toString()) }
                 .build()
 
             val messageId = FirebaseMessaging.getInstance().send(message)

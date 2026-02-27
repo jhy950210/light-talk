@@ -6,5 +6,5 @@ package com.lighttalk.chat.service
  */
 interface PushNotificationService {
 
-    fun sendPushNotification(userId: Long, title: String, body: String, badgeCount: Int = 0)
+    fun sendPushNotification(userId: Long, title: String, body: String, badgeCount: Int = 0, chatRoomId: Long? = null)
 }
